@@ -2,7 +2,7 @@
 import NextAuth from "next-auth";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
-import clientPromise from "@/lib/services/db";
+import clientPromise from "@/lib/db";
 import bcrypt from "bcryptjs";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -42,5 +42,5 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   session: { strategy: "jwt" },
-  secret: process.env.AUTH_SECRET, // En v5 la variable estándar es AUTH_SECRET (o NEXTAUTH_SECRET)
+  secret: process.env.AUTH_SECRET,
 });
