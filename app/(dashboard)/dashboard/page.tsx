@@ -3,6 +3,7 @@ import { Chart } from "@/components/ui/dashboard/chart";
 import { StatCard } from "@/components/ui/stat-card";
 import { auth } from "@/lib/auth";
 import { Package, ShoppingBag, TrendingUp, Users } from "lucide-react";
+import Link from "next/link";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -23,7 +24,9 @@ export default async function DashboardPage() {
           </p>
         </span>
         <span className="shrink-0 hidden sm:flex">
-          <ButtonComponent label={`+\u00A0\u00A0Nueva Venta`} />
+          <Link href="/admin/orders">
+            <ButtonComponent label={`+\u00A0\u00A0Nueva Venta`} />
+          </Link>
         </span>
       </div>
 
@@ -159,7 +162,9 @@ export default async function DashboardPage() {
         </section>
       </section>
       <span className="shrink-0 sm:hidden flex fixed bottom-4 right-4 z-40">
-        <ButtonComponent label={`+\u00A0\u00A0Nueva Venta`} />
+        <Link href="/admin/orders">
+          <ButtonComponent label={`+\u00A0\u00A0Nueva Venta`} />
+        </Link>
       </span>
     </div>
   );
