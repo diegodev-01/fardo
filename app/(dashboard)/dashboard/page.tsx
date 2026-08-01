@@ -10,24 +10,25 @@ export default async function DashboardPage() {
 
   return (
     <div className="w-full">
-      <div className="flex justify-between items-center border-b border-primary-lighter w-full p-6 ">
+      <div className="flex  sm:justify-between sm:items-center gap-4 border-b border-primary-lighter w-full p-4 sm:p-6">
         <span>
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
             ¡Hola, {user?.name || "Usuario"}!
           </h1>
-          <p className="text-sm text-text mt-1">
-            Bienvenido a tu panel de control. Rol:
+          <p className="text-xs sm:text-sm text-text mt-1">
+            Bienvenido a tu panel de control. Rol:{" "}
             <span className="font-semibold text-primary capitalize">
               {user?.role || "customer"}
             </span>
           </p>
         </span>
-        <span>
+        <span className="shrink-0 hidden sm:flex">
           <ButtonComponent label={`+\u00A0\u00A0Nueva Venta`} />
         </span>
       </div>
-      <section className="p-4 sm:p-6 lg:p-10 space-y-8 w-full">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full justify-items-center">
+
+      <section className="p-4 sm:p-6 lg:p-10 space-y-6 sm:space-y-8 w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full">
           <StatCard
             title="Ganancia del día"
             value={12}
@@ -58,8 +59,8 @@ export default async function DashboardPage() {
         </div>
 
         <section className="grid grid-cols-1 lg:grid-cols-8 gap-4 w-full">
-          <div className="p-12 rounded-2xl border border-border bg-card sm:p-10 lg:col-span-5">
-            <h4 className="font-mono text-[9px] uppercase mt-1 tracking-[0.2em] text-text text-xs">
+          <div className="p-4 sm:p-6 lg:p-10 rounded-2xl border border-border bg-card lg:col-span-5">
+            <h4 className="font-mono text-[9px] uppercase mt-1 tracking-[0.2em] text-text">
               Ingresos vs Utilidad - Semana en curso
             </h4>
             <div>
@@ -67,40 +68,40 @@ export default async function DashboardPage() {
             </div>
           </div>
           <div className="flex flex-col gap-4 lg:col-span-3">
-            <div className="p-12 rounded-2xl border border-border bg-card sm:p-10">
-              <h4 className=" font-mono text-[9px] uppercase mt-1 tracking-[0.2em] text-text text-xs">
+            <div className="p-4 sm:p-6 lg:p-10 rounded-2xl border border-border bg-card">
+              <h4 className="font-mono text-[9px] uppercase mt-1 tracking-[0.2em] text-text">
                 Pedidos Pendientes
               </h4>
             </div>
-            <div className="p-12 rounded-2xl border border-border bg-card sm:p-10">
-              <h4 className="font-mono text-[9px] uppercase mt-1 tracking-[0.2em] text-text text-xs">
+            <div className="p-4 sm:p-6 lg:p-10 rounded-2xl border border-border bg-card">
+              <h4 className="font-mono text-[9px] uppercase mt-1 tracking-[0.2em] text-text">
                 Resumen de la semana
               </h4>
             </div>
           </div>
-          <div className="lg:col-span-5 flex flex-col gap-6">
+          <div className="lg:col-span-5 flex flex-col gap-4 sm:gap-6">
             {/* Cabecera de la sección */}
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-base text-foreground tracking-tight">
+              <h3 className="font-bold text-sm sm:text-base text-foreground tracking-tight">
                 Progreso de Pacas
               </h3>
-              <button className="text-[11px] text-primary font-mono hover:underline">
+              <button className="text-[11px] text-primary font-mono hover:underline shrink-0">
                 Ver inventario →
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-5 rounded-2xl border border-border bg-background/50 flex flex-col gap-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h4 className="font-bold text-sm text-foreground">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+              <div className="p-4 sm:p-5 rounded-2xl border border-border bg-background/50 flex flex-col gap-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h4 className="font-bold text-sm text-foreground truncate">
                       B-2024-047
                     </h4>
-                    <p className="text-xs text-text opacity-70 mt-0.5">
+                    <p className="text-xs text-text opacity-70 mt-0.5 truncate">
                       Ropa USA Imports
                     </p>
                   </div>
-                  <span className="px-2.5 py-1 text-[10px] font-mono font-semibold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
+                  <span className="px-2.5 py-1 text-[10px] font-mono font-semibold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 rounded-full shrink-0">
                     Activo
                   </span>
                 </div>
@@ -112,7 +113,7 @@ export default async function DashboardPage() {
                       style={{ width: `${(8 / 85) * 100}%` }}
                     />
                   </div>
-                  <span className="font-mono text-[11px] text-text opacity-70">
+                  <span className="font-mono text-[11px] text-text opacity-70 shrink-0">
                     8/85
                   </span>
                 </div>
@@ -122,17 +123,17 @@ export default async function DashboardPage() {
                 </p>
               </div>
 
-              <div className="p-5 rounded-2xl border border-border bg-background/50 flex flex-col gap-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h4 className="font-bold text-sm text-foreground">
+              <div className="p-4 sm:p-5 rounded-2xl border border-border bg-background/50 flex flex-col gap-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h4 className="font-bold text-sm text-foreground truncate">
                       B-2024-045
                     </h4>
-                    <p className="text-xs text-text opacity-70 mt-0.5">
+                    <p className="text-xs text-text opacity-70 mt-0.5 truncate">
                       Ropa USA Imports
                     </p>
                   </div>
-                  <span className="px-2.5 py-1 text-[10px] font-mono font-semibold text-purple-600 bg-purple-500/10 border border-purple-500/20 rounded-full">
+                  <span className="px-2.5 py-1 text-[10px] font-mono font-semibold text-purple-600 bg-purple-500/10 border border-purple-500/20 rounded-full shrink-0">
                     Nuevo
                   </span>
                 </div>
@@ -144,7 +145,7 @@ export default async function DashboardPage() {
                       style={{ width: "0%" }}
                     />
                   </div>
-                  <span className="font-mono text-[11px] text-text opacity-70">
+                  <span className="font-mono text-[11px] text-text opacity-70 shrink-0">
                     0/70
                   </span>
                 </div>
@@ -157,6 +158,9 @@ export default async function DashboardPage() {
           </div>
         </section>
       </section>
+      <span className="shrink-0 sm:hidden flex fixed bottom-4 right-4 z-40">
+        <ButtonComponent label={`+\u00A0\u00A0Nueva Venta`} />
+      </span>
     </div>
   );
 }

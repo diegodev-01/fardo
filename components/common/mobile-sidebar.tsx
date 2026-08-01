@@ -34,16 +34,14 @@ export function MobileSidebar({
 
   return (
     <>
-      {/* Botón hamburguesa - solo visible en mobile */}
       <button
         onClick={() => setOpen(true)}
-        className="md:hidden fixed top-4 left-4 z-40 p-2 rounded-lg bg-card border shadow-sm"
+        className="md:hidden fixed top-4 right-4 z-40 p-2 rounded-lg bg-card border shadow-sm"
         aria-label="Abrir menú"
       >
         <Menu className="h-5 w-5 text-primary" />
       </button>
 
-      {/* Overlay oscuro */}
       {open && (
         <div
           onClick={() => setOpen(false)}
@@ -51,7 +49,6 @@ export function MobileSidebar({
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={`
           w-64 border-r bg-card flex flex-col justify-between border-l-2 border-primary-lighter
