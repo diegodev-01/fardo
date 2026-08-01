@@ -20,7 +20,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         await connectDB();
 
-        // Aseguramos incluir la contraseña en la búsqueda
         const user = await UserModel.findOne({ email }).select("+password");
 
         if (!user || !user.password) return null;
@@ -41,7 +40,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
   secret: process.env.AUTH_SECRET,
   pages: {
-    signIn: "/login", // Redirección a tu vista personalizada de login
+    signIn: "/login",
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -54,7 +53,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
-        session.user.role = token.role as string; // Disponible en session.user.role
+        session.user.role = token.role as string;
       }
       return session;
     },

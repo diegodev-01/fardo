@@ -6,27 +6,59 @@ import { NextResponse } from "next/server";
 
 export const GET = withRole(["admin", "salesperson"], async (req, session) => {
   await connectDB();
+
+  const { searchParams } = new URL(req.url);
+  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+  const limit = Math.max(1, parseInt(searchParams.get("limit") || "10", 10));
+  const skip = (page - 1) * limit;
+
   const query =
     session.user.role === "admin" ? {} : { salesperson: session.user.id };
 
-  const [bales, garments] = await Promise.all([
-    baleModel.find(query).sort({ createdAt: -1 }),
-    garmentModel.find(query).sort({ createdAt: -1 }),
+  const [bales, garments, totalBales, totalGarments] = await Promise.all([
+    baleModel
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    garmentModel
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    baleModel.countDocuments(query),
+    garmentModel.countDocuments(query),
   ]);
 
+  const maxTotalDocs = Math.max(totalBales, totalGarments);
+  const totalPages = Math.ceil(maxTotalDocs / limit);
+
   const inventory = {
-    bales: bales.map((bale) => ({
-      id: bale._id,
-      name: bale.name,
-      quantity: bale.quantity,
-      createdAt: bale.createdAt,
-    })),
-    garments: garments.map((garment) => ({
-      id: garment._id,
-      name: garment.name,
-      quantity: garment.quantity,
-      createdAt: garment.createdAt,
-    })),
+    data: {
+      bales: bales.map(({ _id, name, quantity, createdAt }) => ({
+        id: _id,
+        name,
+        quantity,
+        createdAt,
+      })),
+      garments: garments.map(({ _id, name, quantity, createdAt }) => ({
+        id: _id,
+        name,
+        quantity,
+        createdAt,
+      })),
+    },
+    pagination: {
+      page,
+      limit,
+      totalBales,
+      totalGarments,
+      totalPages,
+      hasNextPage: page * limit < maxTotalDocs,
+      hasPrevPage: page > 1,
+    },
   };
 
   return NextResponse.json(inventory);

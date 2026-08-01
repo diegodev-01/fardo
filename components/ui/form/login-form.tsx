@@ -5,13 +5,7 @@ import { login } from "@/lib/services/auth.service";
 import { InputComponent } from "./input-component";
 
 export function LoginForm() {
-  type LoginState = { error: string } | null;
-
-  // useActionState recibe la Server Action y el estado inicial
-  const [state, formAction, isPending] = useActionState<LoginState, FormData>(
-    async (_state, formData) => (await login(formData)) as unknown as LoginState,
-    null,
-  );
+  const [state, formAction, isPending] = useActionState(login, null);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -30,7 +24,7 @@ export function LoginForm() {
         required
       />
 
-      {state && (
+      {state?.error && (
         <p className="text-xs text-red-500 font-medium">{state.error}</p>
       )}
 

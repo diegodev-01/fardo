@@ -9,13 +9,13 @@ const geistSans = Geist({
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+  variable: "--font-mono", // <--- Solo el nombre de la variable aquí
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
   title: "Fardo",
-  description: "Aplicacion web para gestionar ventas y entregas de productos",
+  description: "Aplicación web para gestionar ventas y entregas de productos",
 };
 
 export default function RootLayout({
@@ -25,14 +25,14 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="es"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}
-        </ThemeProvider>
+        </ThemeProvider>  
       </body>
     </html>
   );

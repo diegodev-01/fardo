@@ -8,7 +8,7 @@ type HandlerWithSession = (
   session: Session,
 ) => Promise<NextResponse>;
 
-type Roles = "admin" | "salesperson" | "user";
+type Roles = "admin" | "salesperson" | "customer";
 
 export function withRole(roles: Roles[], handler: HandlerWithSession) {
   return async (req: Request) => {

@@ -1,19 +1,29 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fff3df;
+  --background: #ffffff;
   --foreground: #252525;
-  --text-color: #464646;
+  --text-color: #292929;
   --primary: #007b7b;
+  --secondary: #fe9a00;
   --primary-light: #83bebe;
+  --primary-lighter: #bcecec;
+  --primary-foreground: #0f0e0a;
+  --card: #f4fffe;
+  --border: #f4fffe;
 }
 
 .dark {
-  --background: #252525;
+  --background: #1b1b1b;
   --foreground: #fff3df;
   --text-color: #d9d9d9;
   --primary: #007b7b;
   --primary-light: #83bebe;
+  --primary-lighter: #bcecec;
+  --primary-foreground: #dffaff;
+  --card: #1d1d1d;
+  --border: #2b2c2c;
+  --secondary: #ffaa00;
 }
 
 @theme inline {
@@ -22,9 +32,16 @@
   --color-text: var(--text-color);
   --color-primary: var(--primary);
   --color-primary-light: var(--primary-light);
+  --color-primary-lighter: var(--primary-lighter);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --color-secondary: var(--secondary);
 
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  --font-mono:
+    var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
 }
 
 body {

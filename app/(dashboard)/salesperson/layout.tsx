@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
-export default async function AdminLayout({
+export default async function SalespersonLayout({
   children,
 }: {
   children: React.ReactNode;
