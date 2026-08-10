@@ -2,7 +2,7 @@ import { model, models, Schema } from "mongoose";
 
 export interface IGarment {
     _id: string;
-    BaleId: string;
+    BaleId?: string;
     code?: string;
     name: string;
     price: number;
@@ -16,8 +16,8 @@ export interface IGarment {
 
 const GarmentSchema = new Schema<IGarment>(
     {
-        BaleId: { type: String, required: true },
-        code: { type: String, unique: true, sparse: true },
+        BaleId: { type: String, required: false },
+        code: { type: String, unique: true, sparse: true, required: false },
         name: { type: String, required: true },
         price: { type: Number, required: true },
         quantity: { type: Number, default: 1 },

@@ -4,7 +4,7 @@ export interface IBale {
   _id: string;
   name: string;
   weight: number;
-  totalPrice: number;
+  price: number;
   sendPrice: number;
   totalQuantity: number;
   state: "ABIERTO" | "A LA VENTA" | "VENDIDO";
@@ -17,7 +17,7 @@ const BaleSchema = new Schema<IBale>(
   {
     name: { type: String, required: true },
     weight: { type: Number, required: true },
-    totalPrice: { type: Number, required: true },
+    price: { type: Number, required: true },
     sendPrice: { type: Number, required: true },
     totalQuantity: { type: Number, required: true },
     state: {

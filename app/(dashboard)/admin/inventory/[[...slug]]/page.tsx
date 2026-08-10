@@ -2,7 +2,9 @@
 
 import { CardComponent } from "@/components/common/card-component";
 import { ButtonComponent } from "@/components/ui/button-component";
+import { InputComponent } from "@/components/ui/form/input-component";
 import { useRouter, useParams } from "next/navigation";
+import { useState } from "react";
 
 interface InventoryProps {
   total?: number;
@@ -170,22 +172,54 @@ const Inventory = ({
   const slug = params?.slug as string[] | undefined;
   const [type, id] = slug ?? [];
 
-  const selectedCard =
-    allItems.find((item) => item.type === type && item.id === Number(id)) ||
-    null;
+  const isRegistering = id === "register";
+
+  const selectedCard = !isRegistering
+    ? allItems.find((item) => item.type === type && item.id === Number(id)) ||
+      null
+    : null;
+
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    price: "",
+    state: "DISPONIBLE",
+    totalQuantity: "",
+    quantity: "1",
+    weight: "",
+    sendPrice: "",
+  });
+
+  console.log("los datitos: ", formData);
 
   const handleSelectCard = (card: Card) => {
     router.push(`/admin/inventory/${card.type}/${card.id}`);
+  };
+
+  const handleStartRegister = () => {
+    router.push("/admin/inventory/bale/register");
+  };
+
+  const handleSwitchType = (newType: "bale" | "garment") => {
+    router.push(`/admin/inventory/${newType}/register`);
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Registrando nuevo elemento:", { type, ...formData });
+    router.push("/admin/inventory");
   };
 
   const clasificated = 50;
 
   return (
     <div className="flex">
-      <aside className="w-80 h-screen border border-border">
+      <aside className="w-80 border-r border-border">
         <div className="flex justify-between items-center p-4">
           <h3 className="text-lg font-semibold">Prendas y fardos</h3>
-          <ButtonComponent>+ Nueva</ButtonComponent>
+          <ButtonComponent onClick={handleStartRegister}>
+            + Nueva
+          </ButtonComponent>
         </div>
         <div className="flex justify-around items-center p-4 border-t border-b border-border">
           <span className="flex flex-col items-center w-20">
@@ -207,7 +241,7 @@ const Inventory = ({
             </p>
           </span>
         </div>
-        <ul className="p-4 space-y-2">
+        <ul className="p-4 space-y-2 overflow-y-auto h-[calc(100vh-150px)]">
           <li className="pb-5 mb-5 border-b border-border rounded-md relative">
             <CardComponent
               onClick={() => handleSelectCard(garments)}
@@ -336,8 +370,182 @@ const Inventory = ({
         </ul>
       </aside>
 
-      <section className="flex-1">
-        {selectedCard ? (
+      <section className="flex-1 overflow-auto">
+        {isRegistering ? (
+          <div className="p-6">
+            <div className="flex justify-between items-center pb-4 mb-6 border-b border-border">
+              <div>
+                <h2 className="text-xl font-semibold">
+                  Registrar {type === "garment" ? "Prenda Individual" : "Fardo"}
+                </h2>
+                <p className="text-xs text-text/70 font-mono mt-1">
+                  Ingresa la información inicial para el inventario
+                </p>
+              </div>
+
+              <div className="flex p-1 bg-border/30 rounded-lg gap-1 font-mono text-xs">
+                <button
+                  type="button"
+                  onClick={() => handleSwitchType("bale")}
+                  className={`px-3 py-1.5 rounded-md transition-all ${
+                    type === "bale"
+                      ? "bg-background font-medium shadow-sm border border-border"
+                      : "text-text/60 hover:text-text"
+                  }`}
+                >
+                  Fardo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSwitchType("garment")}
+                  className={`px-3 py-1.5 rounded-md transition-all ${
+                    type === "garment"
+                      ? "bg-background font-medium shadow-sm border border-border"
+                      : "text-text/60 hover:text-text"
+                  }`}
+                >
+                  Prenda
+                </button>
+              </div>
+            </div>
+
+            <form onSubmit={handleFormSubmit} className="space-y-4 font-mono">
+              <InputComponent
+                label="Título / Nombre"
+                name="name"
+                required
+                placeholder={
+                  type === "garment"
+                    ? "Ej. Lote Prendas Verano"
+                    : "Ej. Fardo Opción C"
+                }
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+              />
+
+              <div>
+                <label
+                  htmlFor="description"
+                  className="block text-xs font-medium text-text/70 mb-1"
+                >
+                  Descripción
+                </label>
+                <textarea
+                  id="description"
+                  name="description"
+                  rows={3}
+                  placeholder="Descripción del contenido o detalles de ingreso..."
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                  className="w-full p-2 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <InputComponent
+                  label="Precio ($)"
+                  name="price"
+                  required
+                  placeholder="$0.00"
+                  value={formData.price}
+                  onChange={(e) =>
+                    setFormData({ ...formData, price: e.target.value })
+                  }
+                />
+
+                <div>
+                  <label
+                    htmlFor="state"
+                    className="block text-xs font-medium text-text/70 mb-1"
+                  >
+                    Estado
+                  </label>
+                  <select
+                    name="state"
+                    id="state"
+                    value={formData.state}
+                    onChange={(e) =>
+                      setFormData({ ...formData, state: e.target.value })
+                    }
+                    className="w-full p-2 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="DISPONIBLE">Disponible</option>
+                    <option value="DEFECTUOSO">Defectuoso</option>
+                    <option value="RESERVADO">Reservado</option>
+                    <option value="VENDIDO">Vendido</option>
+                  </select>
+                </div>
+
+                {type === "bale" ? (
+                  <>
+                    <InputComponent
+                      label="Número de piezas"
+                      name="totalQuantity"
+                      type="number"
+                      required
+                      placeholder="0"
+                      value={formData.totalQuantity}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          totalQuantity: e.target.value,
+                        })
+                      }
+                    />
+                    <InputComponent
+                      label="Peso"
+                      name="weight"
+                      type="number"
+                      placeholder="Peso en Kg"
+                      value={formData.weight}
+                      onChange={(e) =>
+                        setFormData({ ...formData, weight: e.target.value })
+                      }
+                    />
+                    <InputComponent
+                      label="Precio de envío"
+                      name="sendPrice"
+                      type="number"
+                      placeholder="0Bs"
+                      value={formData.sendPrice}
+                      onChange={(e) =>
+                        setFormData({ ...formData, sendPrice: e.target.value })
+                      }
+                    />
+                  </>
+                ) : (
+                  <InputComponent
+                    label="Cantidad"
+                    name="quantity"
+                    type="number"
+                    placeholder="1"
+                    value={formData.quantity}
+                    onChange={(e) =>
+                      setFormData({ ...formData, quantity: e.target.value })
+                    }
+                  />
+                )}
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-border mt-6">
+                <ButtonComponent type="submit">
+                  Guardar Registro
+                </ButtonComponent>
+                <button
+                  type="button"
+                  onClick={() => router.push("/admin/inventory")}
+                  className="px-4 py-2 text-xs text-text/70 hover:text-text font-mono transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        ) : selectedCard ? (
           <>
             <div className="flex text-lg font-semibold px-6 py-5 border-b border-border gap-4 items-center">
               <div className="flex-1">
@@ -420,7 +628,13 @@ const Inventory = ({
                       >
                         <h4 className="flex items-center font-mono text-sm font-semibold gap-3">
                           {piece.name}
-                          <p className={`flex items-center justify-center py-1 px-2 border rounded-2xl font-mono text-[10px] text-text/70 ${piece.status === "Disponible" ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-red-500/10 text-red-600 border-red-500/20"}`}>
+                          <p
+                            className={`flex items-center justify-center py-1 px-2 border rounded-2xl font-mono text-[10px] text-text/70 ${
+                              piece.status === "Disponible"
+                                ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                                : "bg-red-500/10 text-red-600 border-red-500/20"
+                            }`}
+                          >
                             {piece.status}
                           </p>
                         </h4>
@@ -449,7 +663,7 @@ const Inventory = ({
         ) : (
           <div className="flex justify-center items-center h-full">
             <p className="text-lg font-semibold text-text/50">
-              Selecciona una opción para ver los detalles
+              Selecciona una opción o crea una nueva
             </p>
           </div>
         )}
