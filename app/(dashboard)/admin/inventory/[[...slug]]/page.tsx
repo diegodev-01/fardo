@@ -37,6 +37,29 @@ export interface Card {
   income: number;
 }
 
+interface PieceTypeAllocation {
+  type: string;
+  quantity: string;
+}
+
+const PIECE_OPTIONS = [
+  { label: "Polera", value: "POLERA" },
+  { label: "Abrigo", value: "ABRIGO" },
+  { label: "Vestido", value: "VESTIDO" },
+  { label: "Top", value: "TOP" },
+  { label: "Pantalón", value: "PANTALON" },
+  { label: "Camisa", value: "CAMISA" },
+  { label: "Falda", value: "FALDA" },
+  { label: "Short", value: "SHORT" },
+  { label: "Jeans", value: "JEANS" },
+  { label: "Chaqueta / Chamarra", value: "CHAQUETA" },
+  { label: "Polerón / Sudadera", value: "POLERON" },
+  { label: "Chaleco", value: "CHALECO" },
+  { label: "Calzado", value: "CALZADO" },
+  { label: "Accesorio", value: "ACCESORIO" },
+  { label: "Otro", value: "OTRO" },
+];
+
 const garments: Card = {
   id: 0,
   type: "garment",
@@ -187,10 +210,9 @@ const Inventory = ({
     totalQuantity: "",
     quantity: "1",
     weight: "",
+    pieceTypes: [] as PieceTypeAllocation[],
     sendPrice: "",
   });
-
-  console.log("los datitos: ", formData);
 
   const handleSelectCard = (card: Card) => {
     router.push(`/admin/inventory/${card.type}/${card.id}`);
@@ -204,6 +226,37 @@ const Inventory = ({
     router.push(`/admin/inventory/${newType}/register`);
   };
 
+  const handleAddPieceType = (selectedType: string) => {
+    if (!selectedType) return;
+    if (formData.pieceTypes.some((p) => p.type === selectedType)) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      pieceTypes: [...prev.pieceTypes, { type: selectedType, quantity: "" }],
+    }));
+  };
+
+  const handleQuantityChange = (index: number, quantity: string) => {
+    setFormData((prev) => {
+      const updated = [...prev.pieceTypes];
+      updated[index] = { ...updated[index], quantity };
+      return { ...prev, pieceTypes: updated };
+    });
+  };
+
+  const handleRemovePieceType = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      pieceTypes: prev.pieceTypes.filter((_, i) => i !== index),
+    }));
+  };
+
+  const totalAllocated = formData.pieceTypes.reduce(
+    (acc, item) => acc + (Number(item.quantity) || 0),
+    0,
+  );
+  const targetTotal = Number(formData.totalQuantity) || 0;
+
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Registrando nuevo elemento:", { type, ...formData });
@@ -213,15 +266,15 @@ const Inventory = ({
   const clasificated = 50;
 
   return (
-    <div className="flex">
-      <aside className="w-80 border-r border-border">
-        <div className="flex justify-between items-center p-4">
+    <div className="flex h-screen overflow-hidden">
+      <aside className="w-80 border-r border-border flex flex-col shrink-0 h-full">
+        <div className="flex justify-between items-center p-4 shrink-0">
           <h3 className="text-lg font-semibold">Prendas y fardos</h3>
           <ButtonComponent onClick={handleStartRegister}>
             + Nueva
           </ButtonComponent>
         </div>
-        <div className="flex justify-around items-center p-4 border-t border-b border-border">
+        <div className="flex justify-around items-center p-4 border-t border-b border-border shrink-0">
           <span className="flex flex-col items-center w-20">
             <h2 className="text-xl font-semibold">{total}</h2>
             <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-[0.15em] sm:tracking-[0.2em] text-text font-medium truncate">
@@ -241,7 +294,7 @@ const Inventory = ({
             </p>
           </span>
         </div>
-        <ul className="p-4 space-y-2 overflow-y-auto h-[calc(100vh-150px)]">
+        <ul className="p-4 space-y-2 overflow-y-auto flex-1">
           <li className="pb-5 mb-5 border-b border-border rounded-md relative">
             <CardComponent
               onClick={() => handleSelectCard(garments)}
@@ -370,10 +423,11 @@ const Inventory = ({
         </ul>
       </aside>
 
-      <section className="flex-1 overflow-auto">
+      <section className="flex-1 flex flex-col h-full overflow-hidden">
         {isRegistering ? (
-          <div className="p-6">
-            <div className="flex justify-between items-center pb-4 mb-6 border-b border-border">
+          <div className="flex flex-col h-full">
+            {/* Título y selectores estáticos */}
+            <div className="flex justify-between items-center p-6 pb-4 border-b border-border shrink-0 bg-background">
               <div>
                 <h2 className="text-xl font-semibold">
                   Registrar {type === "garment" ? "Prenda Individual" : "Fardo"}
@@ -409,145 +463,231 @@ const Inventory = ({
               </div>
             </div>
 
-            <form onSubmit={handleFormSubmit} className="space-y-4 font-mono">
-              <InputComponent
-                label="Título / Nombre"
-                name="name"
-                required
-                placeholder={
-                  type === "garment"
-                    ? "Ej. Lote Prendas Verano"
-                    : "Ej. Fardo Opción C"
-                }
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-              />
-
-              <div>
-                <label
-                  htmlFor="description"
-                  className="block text-xs font-medium text-text/70 mb-1"
-                >
-                  Descripción
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  rows={3}
-                  placeholder="Descripción del contenido o detalles de ingreso..."
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  className="w-full p-2 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary resize-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+            {/* Únicamente el formulario realiza scroll */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <form onSubmit={handleFormSubmit} className="space-y-4 font-mono">
                 <InputComponent
-                  label="Precio ($)"
-                  name="price"
+                  label="Título / Nombre"
+                  name="name"
                   required
-                  placeholder="$0.00"
-                  value={formData.price}
+                  placeholder={
+                    type === "garment"
+                      ? "Ej. Lote Prendas Verano"
+                      : "Ej. Fardo Opción C"
+                  }
+                  value={formData.name}
                   onChange={(e) =>
-                    setFormData({ ...formData, price: e.target.value })
+                    setFormData({ ...formData, name: e.target.value })
                   }
                 />
 
                 <div>
                   <label
-                    htmlFor="state"
+                    htmlFor="description"
                     className="block text-xs font-medium text-text/70 mb-1"
                   >
-                    Estado
+                    Descripción
                   </label>
-                  <select
-                    name="state"
-                    id="state"
-                    value={formData.state}
+                  <textarea
+                    id="description"
+                    name="description"
+                    rows={3}
+                    placeholder="Descripción del contenido o detalles de ingreso..."
+                    value={formData.description}
                     onChange={(e) =>
-                      setFormData({ ...formData, state: e.target.value })
+                      setFormData({ ...formData, description: e.target.value })
                     }
-                    className="w-full p-2 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
-                  >
-                    <option value="DISPONIBLE">Disponible</option>
-                    <option value="DEFECTUOSO">Defectuoso</option>
-                    <option value="RESERVADO">Reservado</option>
-                    <option value="VENDIDO">Vendido</option>
-                  </select>
+                    className="w-full p-2 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary resize-none"
+                  />
                 </div>
 
-                {type === "bale" ? (
-                  <>
-                    <InputComponent
-                      label="Número de piezas"
-                      name="totalQuantity"
-                      type="number"
-                      required
-                      placeholder="0"
-                      value={formData.totalQuantity}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          totalQuantity: e.target.value,
-                        })
-                      }
-                    />
-                    <InputComponent
-                      label="Peso"
-                      name="weight"
-                      type="number"
-                      placeholder="Peso en Kg"
-                      value={formData.weight}
-                      onChange={(e) =>
-                        setFormData({ ...formData, weight: e.target.value })
-                      }
-                    />
-                    <InputComponent
-                      label="Precio de envío"
-                      name="sendPrice"
-                      type="number"
-                      placeholder="0Bs"
-                      value={formData.sendPrice}
-                      onChange={(e) =>
-                        setFormData({ ...formData, sendPrice: e.target.value })
-                      }
-                    />
-                  </>
-                ) : (
+                <div className="grid grid-cols-2 gap-4">
                   <InputComponent
-                    label="Cantidad"
-                    name="quantity"
-                    type="number"
-                    placeholder="1"
-                    value={formData.quantity}
+                    label="Precio ($)"
+                    name="price"
+                    required
+                    placeholder="$0.00"
+                    value={formData.price}
                     onChange={(e) =>
-                      setFormData({ ...formData, quantity: e.target.value })
+                      setFormData({ ...formData, price: e.target.value })
                     }
                   />
-                )}
-              </div>
 
-              <div className="flex gap-3 pt-4 border-t border-border mt-6">
-                <ButtonComponent type="submit">
-                  Guardar Registro
-                </ButtonComponent>
-                <button
-                  type="button"
-                  onClick={() => router.push("/admin/inventory")}
-                  className="px-4 py-2 text-xs text-text/70 hover:text-text font-mono transition-colors"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </form>
+                  <div>
+                    <label
+                      htmlFor="state"
+                      className="block text-xs font-medium text-text/70 mb-1"
+                    >
+                      Estado
+                    </label>
+                    <select
+                      name="state"
+                      id="state"
+                      value={formData.state}
+                      onChange={(e) =>
+                        setFormData({ ...formData, state: e.target.value })
+                      }
+                      className="w-full p-2 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
+                    >
+                      <option value="DISPONIBLE">Disponible</option>
+                      <option value="DEFECTUOSO">Defectuoso</option>
+                      <option value="RESERVADO">Reservado</option>
+                      <option value="VENDIDO">Vendido</option>
+                    </select>
+                  </div>
+
+                  {type === "bale" ? (
+                    <>
+                      <InputComponent
+                        label="Número de piezas totales"
+                        name="totalQuantity"
+                        type="number"
+                        required
+                        placeholder="0"
+                        value={formData.totalQuantity}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            totalQuantity: e.target.value,
+                          })
+                        }
+                      />
+
+                      <InputComponent
+                        label="Peso"
+                        name="weight"
+                        type="number"
+                        placeholder="Peso en Kg"
+                        value={formData.weight}
+                        onChange={(e) =>
+                          setFormData({ ...formData, weight: e.target.value })
+                        }
+                      />
+
+                      <div className="col-span-2 space-y-3 p-3 bg-border/10 border border-border rounded-md">
+                        <div className="flex justify-between items-center">
+                          <label className="block text-xs font-medium text-text/80">
+                            Desglose por tipos de prenda
+                          </label>
+                          {targetTotal > 0 && (
+                            <span
+                              className={`text-xs font-mono px-2 py-0.5 rounded-full ${
+                                totalAllocated === targetTotal
+                                  ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
+                                  : totalAllocated > targetTotal
+                                    ? "bg-red-500/10 text-red-600 border border-red-500/20"
+                                    : "bg-amber-500/10 text-amber-600 border border-amber-500/20"
+                              }`}
+                            >
+                              {totalAllocated} / {targetTotal} pcs
+                            </span>
+                          )}
+                        </div>
+
+                        <select
+                          value=""
+                          onChange={(e) => handleAddPieceType(e.target.value)}
+                          className="w-full p-2 text-xs bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
+                        >
+                          <option value="" disabled>
+                            + Seleccionar tipo para agregar...
+                          </option>
+                          {PIECE_OPTIONS.filter(
+                            (opt) =>
+                              !formData.pieceTypes.some(
+                                (p) => p.type === opt.value,
+                              ),
+                          ).map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+
+                        {formData.pieceTypes.length > 0 && (
+                          <div className="space-y-2 mt-2">
+                            {formData.pieceTypes.map((item, idx) => {
+                              const optLabel =
+                                PIECE_OPTIONS.find((o) => o.value === item.type)
+                                  ?.label || item.type;
+                              return (
+                                <div
+                                  key={item.type}
+                                  className="flex items-center gap-2 bg-background p-2 border border-border rounded-md"
+                                >
+                                  <span className="text-xs font-medium w-1/2 truncate">
+                                    {optLabel}
+                                  </span>
+                                  <InputComponent
+                                    name={`quantity-${item.type}`}
+                                    type="number"
+                                    placeholder="Cantidad"
+                                    value={item.quantity}
+                                    onChange={(e) =>
+                                      handleQuantityChange(idx, e.target.value)
+                                    }
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemovePieceType(idx)}
+                                    className="p-1 px-2 text-red-500 hover:bg-red-500/10 rounded text-xs transition-colors"
+                                    title="Eliminar"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      <InputComponent
+                        label="Precio de envío"
+                        name="sendPrice"
+                        type="number"
+                        placeholder="0Bs"
+                        value={formData.sendPrice}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            sendPrice: e.target.value,
+                          })
+                        }
+                      />
+                    </>
+                  ) : (
+                    <InputComponent
+                      label="Cantidad"
+                      name="quantity"
+                      type="number"
+                      placeholder="1"
+                      value={formData.quantity}
+                      onChange={(e) =>
+                        setFormData({ ...formData, quantity: e.target.value })
+                      }
+                    />
+                  )}
+                </div>
+
+                <div className="flex gap-3 pt-4 border-t border-border mt-6">
+                  <ButtonComponent type="submit">
+                    Guardar Registro
+                  </ButtonComponent>
+                  <button
+                    type="button"
+                    onClick={() => router.push("/admin/inventory")}
+                    className="px-4 py-2 text-xs text-text/70 hover:text-text font-mono transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         ) : selectedCard ? (
-          <>
-            <div className="flex text-lg font-semibold px-6 py-5 border-b border-border gap-4 items-center">
+          <div className="flex flex-col h-full overflow-y-auto">
+            <div className="flex text-lg font-semibold px-6 py-5 border-b border-border gap-4 items-center shrink-0">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <h2 className="text-lg font-semibold">
@@ -571,7 +711,7 @@ const Inventory = ({
                 <ButtonComponent>Filtro rápido</ButtonComponent>
               </div>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 p-4 border-b border-border bg-primary-lighter/5">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 p-4 border-b border-border bg-primary-lighter/5 shrink-0">
               <span className="flex flex-col justify-center items-center">
                 <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-[0.15em] sm:tracking-[0.2em] text-text font-medium truncate">
                   INVERSION
@@ -601,7 +741,7 @@ const Inventory = ({
                 <p className="font-mono text-sm">{selectedCard.income}</p>
               </span>
             </div>
-            <article className="flex justify-between items-center p-2 border-b border-border gap-4">
+            <article className="flex justify-between items-center p-2 border-b border-border gap-4 shrink-0">
               <div
                 className={`relative w-full h-1 bg-text/10 rounded-full overflow-hidden`}
               >
@@ -659,7 +799,7 @@ const Inventory = ({
                 </div>
               )}
             </div>
-          </>
+          </div>
         ) : (
           <div className="flex justify-center items-center h-full">
             <p className="text-lg font-semibold text-text/50">
