@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Fardo",
+  title: "Mio",
   description: "Aplicación web para gestionar ventas y entregas de productos",
 };
 
