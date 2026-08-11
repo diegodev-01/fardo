@@ -8,6 +8,9 @@ export interface IGarment {
     price: number;
     quantity?: number;
     state: "DISPONIBLE" | "DEFECTUOSO" | "RESERVADO" | "VENDIDO";
+    size?: string;
+    garmentType?: string;
+    grade?: string;
     imageUrl?: string;
     createdAt: Date;
     updatedAt: Date;
@@ -26,6 +29,9 @@ const GarmentSchema = new Schema<IGarment>(
             enum: ["DISPONIBLE", "DEFECTUOSO", "RESERVADO", "VENDIDO"],
             default: "DISPONIBLE",
         },
+        size: { type: String, required: false },
+        garmentType: { type: String, required: false },
+        grade: { type: String, required: false },
         imageUrl: { type: String },
 
         createdAt: { type: Date, default: Date.now },

@@ -16,7 +16,6 @@ export const GET = withRole(
     const query =
       session.user.role === "admin" ? {} : { salesperson: session.user.id };
 
-    // 1. Unificamos las sumas en una sola agregación
     const [garments, totalDocs, totals] = await Promise.all([
       garmentModel
         .find(query)
@@ -60,19 +59,35 @@ export const GET = withRole(
 );
 
 export const POST = withRole(["admin", "salesperson"], async (req, session) => {
-  const { name, quantity, price } = await req.json();
+  const { name, quantity, price, baleId, size, garmentType, grade } = await req.json();
 
   if (!name || typeof quantity !== "number") {
     return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
   }
 
   await connectDB();
-  const newGarment = await garmentModel.create({
+
+  const garmentData: any = {
     name,
     quantity,
     price,
+    size,
+    garmentType,
+    grade,
     salesperson: session.user.id,
-  });
+  };
+
+  if (baleId) {
+    garmentData.BaleId = baleId;
+    garmentData.type = "from_bale";
+
+    const baleModel = (await import("@/lib/models/bale.model")).default;
+    await baleModel.findByIdAndUpdate(baleId, {
+      $inc: { totalQuantity: -1 },
+    });
+  }
+
+  const newGarment = await garmentModel.create(garmentData);
 
   return NextResponse.json(newGarment, { status: 201 });
 });

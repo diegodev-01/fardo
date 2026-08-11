@@ -4,8 +4,8 @@ import { CardComponent } from "@/components/common/card-component";
 import { ButtonComponent } from "@/components/ui/button-component";
 import { InputComponent } from "@/components/ui/form/input-component";
 import { useRouter, useParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useForm, useFieldArray, Resolver } from "react-hook-form";
+import React, { useEffect, useState } from "react";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { formSchema, InventoryFormData } from "@/lib/schemas/bale";
 import {
@@ -38,6 +38,140 @@ export interface Card extends IBale {
   pieces?: Piece[];
 }
 
+const calculatePercentage = (current = 0, total = 0) => {
+  if (!total || total === 0) return "0.0";
+  return ((current / total) * 100).toFixed(1);
+};
+
+const GarmentListItem = React.memo(({
+  garmentCard,
+  isSelected,
+  onSelect
+}: {
+  garmentCard: Card | undefined;
+  isSelected: boolean;
+  onSelect: (card: Card) => void;
+}) => {
+  if (!garmentCard) return null;
+  return (
+    <li
+      className="pb-5 mb-5 border-b border-border rounded-md relative"
+    >
+      <CardComponent
+        onClick={() => onSelect(garmentCard)}
+        isSelected={isSelected}
+      >
+        <h3 className="font-mono text-sm">
+          {garmentCard.name || "Prendas individuales"}
+        </h3>
+        <p
+          className={`absolute p-1 px-2 text-[10px] border rounded-xl right-2 top-2 ${
+            (garmentCard.totalQuantity ?? 0) > 0
+              ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+              : "bg-red-500/10 text-red-600 border-red-500/20"
+          }`}
+        >
+          {(garmentCard.totalQuantity ?? 0) > 0 ? "Disponible" : "Sin piezas"}
+        </p>
+        <p className="font-mono text-xs text-text/70">
+          {garmentCard.description}
+        </p>
+        <div className="flex justify-between items-center mt-2">
+          <span className="font-mono text-sm">
+            <h5 className="text-[10px] font-medium text-text/50">Costo:</h5>
+            {garmentCard.price}
+          </span>
+          <span className="font-mono text-sm">
+            <h5 className="text-[10px] font-medium text-text/50">Agregado:</h5>
+            {garmentCard.createdAt ? formatDate(garmentCard.createdAt) : "-"}
+          </span>
+          <span className="font-mono text-sm">
+            <h5 className="text-[10px] font-medium text-text/50">Piezas:</h5>
+            {garmentCard.totalQuantity ?? 0}
+          </span>
+        </div>
+        <div className="flex justify-between items-center mt-2">
+          <div className="relative w-3/4 h-1 bg-text/10 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-primary transition-all duration-300 ease-in-out rounded-full"
+              style={{
+                width: `${calculatePercentage(
+                  garmentCard.currentPieces,
+                  garmentCard.totalQuantity,
+                )}%`,
+              }}
+            />
+          </div>
+          <span className="font-mono text-sm">
+            {calculatePercentage(
+              garmentCard.currentPieces,
+              garmentCard.totalQuantity,
+            )}
+            %
+          </span>
+        </div>
+      </CardComponent>
+    </li>
+  );
+});
+
+const BaleListItem = React.memo(({
+  card,
+  isSelected,
+  onSelect
+}: {
+  card: Card;
+  isSelected: boolean;
+  onSelect: (card: Card) => void;
+}) => {
+  const pct = calculatePercentage(card.currentPieces, card.totalQuantity);
+  return (
+    <li
+      className="cursor-pointer"
+      onClick={() => onSelect(card)}
+    >
+      <CardComponent isSelected={isSelected}>
+        <h3 className="font-mono text-sm">{card.name}</h3>
+        <p
+          className={`absolute p-1 px-2 text-[10px] border rounded-xl right-2 top-2 ${
+            card.state === "DISPONIBLE"
+              ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+              : "bg-red-500/10 text-red-600 border-red-500/20"
+          }`}
+        >
+          {card.state &&
+            card.state.trim().charAt(0).toUpperCase() +
+              card.state.trim().slice(1).toLowerCase()}
+        </p>
+        <p className="font-mono text-xs text-text/70">{card.description}</p>
+        <div className="flex justify-between items-center mt-2">
+          <span className="font-mono text-sm">
+            <h5 className="text-[10px] font-medium text-text/50">Precio:</h5>
+            {card.price}
+          </span>
+          <span className="font-mono text-sm">
+            <h5 className="text-[10px] font-medium text-text/50">Fecha:</h5>
+            {formatDate(card.createdAt)}
+          </span>
+          <span className="font-mono text-sm">
+            <h5 className="text-[10px] font-medium text-text/50">Piezas:</h5>
+            {card.totalQuantity}
+          </span>
+        </div>
+        <div className="flex justify-between items-center mt-2">
+          <div className="relative w-3/4 h-1 bg-text/10 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-primary transition-all duration-300 ease-in-out rounded-full"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+          <span className="font-mono text-sm">{pct}%</span>
+        </div>
+      </CardComponent>
+    </li>
+  );
+});
+
 const Inventory = ({
   total = 0,
   actives = 0,
@@ -52,6 +186,13 @@ const Inventory = ({
 
   const router = useRouter();
   const params = useParams();
+  const slug = params?.slug as string[] | undefined;
+  
+  const [activeType, setActiveType] = useState<string>(slug?.[0] ?? "bale");
+  const [activeId, setActiveId] = useState<string>(slug?.[1] ?? "register");
+
+  // Keep URL in sync on first load, but don't react to further URL changes
+  // to avoid Next.js router overhead for local UI state.
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -90,19 +231,6 @@ const Inventory = ({
         };
 
         setGarmentCard(singleGarmentCard);
-
-        const initialType = slug?.[0];
-        const initialId = slug?.[1];
-        if (initialType && initialId) {
-          if (initialType === "garment") {
-            setSelectedCard(singleGarmentCard);
-          } else {
-            const foundBale = formattedBales.find(
-              (b: Card) => b._id === initialId,
-            );
-            if (foundBale) setSelectedCard(foundBale);
-          }
-        }
       } catch (error) {
         console.error("Error fetching inventory data:", error);
       }
@@ -111,18 +239,20 @@ const Inventory = ({
     fetchInitialData();
   }, []);
 
-  const slug = params?.slug as string[] | undefined;
-  const [type, id] = slug ?? [];
+  useEffect(() => {
+    if (activeId && activeId !== "register") {
+      if (activeType === "garment") {
+        setSelectedCard(garmentCard || null);
+      } else {
+        const foundBale = bales.find((b: Card) => b._id === activeId);
+        if (foundBale) setSelectedCard(foundBale);
+      }
+    } else {
+      setSelectedCard(null);
+    }
+  }, [activeId, activeType, bales, garmentCard]);
 
-  const isRegistering = id === "register";
-
-  // const selectedCard = !isRegistering
-  //   ? allItems.find(
-  //       (item) =>
-  //         item?.type === type &&
-  //         (item._id === id || (type === "garment" && item.type === "garment")),
-  //     ) || null
-  //   : null;
+  const isRegistering = activeId === "register";
 
   const {
     register,
@@ -134,15 +264,20 @@ const Inventory = ({
   } = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      type: activeType === "garment" ? "garment" : "bale",
       name: "",
       description: "",
       price: "",
       state: "DISPONIBLE",
       quantity: 1,
       totalQuantity: undefined,
+      baleId: "",
       weight: "",
       sendPrice: "",
       pieceTypes: [],
+      size: "",
+      garmentType: "",
+      grade: "",
     },
   });
 
@@ -153,17 +288,22 @@ const Inventory = ({
 
   useEffect(() => {
     reset({
+      type: activeType === "garment" ? "garment" : "bale",
       name: "",
       description: "",
       price: "",
       state: "DISPONIBLE",
       totalQuantity: undefined,
       quantity: 1,
+      baleId: "",
       weight: "",
       sendPrice: "",
       pieceTypes: [],
+      size: "",
+      garmentType: "",
+      grade: "",
     });
-  }, [type, reset]);
+  }, [activeType, reset]);
 
   const watchPieceTypes = watch("pieceTypes") || [];
   const watchTotalQuantity = watch("totalQuantity") || 0;
@@ -174,31 +314,23 @@ const Inventory = ({
   );
   const targetTotal = Number(watchTotalQuantity) || 0;
 
-  const handleSelectCard = (card: Card) => {
+  const handleSelectCard = React.useCallback((card: Card) => {
+    setActiveType(card.type);
+    setActiveId(card._id);
     setSelectedCard(card);
-
-    const targetUrl = `/admin/inventory/${card.type}/${card._id}`;
-    window.history.pushState(null, "", targetUrl);
-  };
+    window.history.pushState(null, '', `/admin/inventory/${card.type}/${card._id}`);
+  }, []);
 
   const handleStartRegister = () => {
-    router.push("/admin/inventory/bale/register");
+    setActiveType("bale");
+    setActiveId("register");
+    window.history.pushState(null, '', "/admin/inventory/bale/register");
   };
 
   const handleSwitchType = (newType: "bale" | "garment") => {
-    router.push(`/admin/inventory/${newType}/register`);
-
-    reset({
-      name: "",
-      description: "",
-      price: "",
-      state: "DISPONIBLE",
-      totalQuantity: undefined,
-      quantity: 1,
-      weight: "",
-      sendPrice: "",
-      pieceTypes: [],
-    });
+    setActiveType(newType);
+    setActiveId("register");
+    window.history.pushState(null, '', `/admin/inventory/${newType}/register`);
   };
 
   const handleAddPieceType = (selectedType: string) => {
@@ -210,16 +342,20 @@ const Inventory = ({
   const handleFormSubmit = async (data: InventoryFormData) => {
     try {
       const endpoint =
-        type === "garment" ? "/api/inventory/garments" : "/api/inventory/bales";
+        activeType === "garment" ? "/api/inventory/garments" : "/api/inventory/bales";
 
       const payload =
-        type === "garment"
+        activeType === "garment"
           ? {
               name: data.name,
               description: data.description,
               price: Number(data.price) || 0,
               state: data.state,
               quantity: Number(data.quantity) || 1,
+              baleId: data.baleId || undefined,
+              size: data.size || undefined,
+              garmentType: data.garmentType || undefined,
+              grade: data.grade || undefined,
             }
           : data;
 
@@ -242,10 +378,7 @@ const Inventory = ({
     }
   };
 
-  const calculatePercentage = (current = 0, total = 0) => {
-    if (!total || total === 0) return "0.0";
-    return ((current / total) * 100).toFixed(1);
-  };
+
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -277,155 +410,38 @@ const Inventory = ({
           </span>
         </div>
         <ul className="p-4 space-y-2 overflow-y-auto flex-1">
-          <li
-            key="garments-total-card"
-            className="pb-5 mb-5 border-b border-border rounded-md relative"
-          >
-            <CardComponent
-              onClick={() => garmentCard && handleSelectCard(garmentCard)}
-              isSelected={
-                selectedCard?._id === "garments-total" &&
-                selectedCard?.type === "garment"
-              }
-            >
-              <h3 className="font-mono text-sm">
-                {garmentCard?.name || "Prendas individuales"}
-              </h3>
-              <p
-                className={`absolute p-1 px-2 text-[10px] border rounded-xl right-2 top-2 ${
-                  (garmentCard?.totalQuantity ?? 0) > 0
-                    ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                    : "bg-red-500/10 text-red-600 border-red-500/20"
-                }`}
-              >
-                {(garmentCard?.totalQuantity ?? 0) > 0
-                  ? "Disponible"
-                  : "Sin piezas"}
-              </p>
-              <p className="font-mono text-xs text-text/70">
-                {garmentCard?.description}
-              </p>
-              <div className="flex justify-between items-center mt-2">
-                <span className="font-mono text-sm">
-                  <h5 className="text-[10px] font-medium text-text/50">
-                    Costo:
-                  </h5>
-                  {garmentCard?.price}
-                </span>
-                <span className="font-mono text-sm">
-                  <h5 className="text-[10px] font-medium text-text/50">
-                    Agregado:
-                  </h5>
-                  {garmentCard?.createdAt
-                    ? formatDate(garmentCard.createdAt)
-                    : "-"}
-                </span>
-                <span className="font-mono text-sm">
-                  <h5 className="text-[10px] font-medium text-text/50">
-                    Piezas:
-                  </h5>
-                  {garmentCard?.totalQuantity ?? 0}
-                </span>
-              </div>
-              <div className="flex justify-between items-center mt-2">
-                <div className="relative w-3/4 h-1 bg-text/10 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-primary transition-all duration-300 ease-in-out rounded-full"
-                    style={{
-                      width: `${calculatePercentage(
-                        garmentCard?.currentPieces,
-                        garmentCard?.totalQuantity,
-                      )}%`,
-                    }}
-                  />
-                </div>
-                <span className="font-mono text-sm">
-                  {calculatePercentage(
-                    garmentCard?.currentPieces,
-                    garmentCard?.totalQuantity,
-                  )}
-                  %
-                </span>
-              </div>
-            </CardComponent>
-          </li>
+          <GarmentListItem
+            garmentCard={garmentCard}
+            isSelected={
+              selectedCard?._id === "garments-total" &&
+              selectedCard?.type === "garment"
+            }
+            onSelect={handleSelectCard}
+          />
 
-          {bales.map((card, index) => {
-            const pct = calculatePercentage(
-              card.currentPieces,
-              card.totalQuantity,
-            );
-            return (
-              <li
-                key={`bale-${card._id || index}`}
-                className="cursor-pointer"
-                onClick={() => handleSelectCard(card)}
-              >
-                <CardComponent
-                  isSelected={
-                    selectedCard?._id === card._id &&
-                    selectedCard?.type === card.type
-                  }
-                >
-                  <h3 className="font-mono text-sm">{card.name}</h3>
-                  <p
-                    className={`absolute p-1 px-2 text-[10px] border rounded-xl right-2 top-2 ${
-                      card.state === "DISPONIBLE"
-                        ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                        : "bg-red-500/10 text-red-600 border-red-500/20"
-                    }`}
-                  >
-                    {card.state &&
-                      card.state.trim().charAt(0).toUpperCase() +
-                        card.state.trim().slice(1).toLowerCase()}
-                  </p>
-                  <p className="font-mono text-xs text-text/70">
-                    {card.description}
-                  </p>
-                  <div className="flex justify-between items-center mt-2">
-                    <span className="font-mono text-sm">
-                      <h5 className="text-[10px] font-medium text-text/50">
-                        Precio:
-                      </h5>
-                      {card.price}
-                    </span>
-                    <span className="font-mono text-sm">
-                      <h5 className="text-[10px] font-medium text-text/50">
-                        Fecha:
-                      </h5>
-                      {formatDate(card.createdAt)}
-                    </span>
-                    <span className="font-mono text-sm">
-                      <h5 className="text-[10px] font-medium text-text/50">
-                        Piezas:
-                      </h5>
-                      {card.totalQuantity}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center mt-2">
-                    <div className="relative w-3/4 h-1 bg-text/10 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-primary transition-all duration-300 ease-in-out rounded-full"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                    <span className="font-mono text-sm">{pct}%</span>
-                  </div>
-                </CardComponent>
-              </li>
-            );
-          })}
+          {bales.map((card, index) => (
+            <BaleListItem
+              key={`bale-${card._id || index}`}
+              card={card}
+              isSelected={
+                selectedCard?._id === card._id &&
+                selectedCard?.type === card.type
+              }
+              onSelect={handleSelectCard}
+            />
+          ))}
         </ul>
       </aside>
 
-      <section className="flex-1 flex flex-col h-full overflow-hidden">
-        {isRegistering ? (
-          <div className="flex flex-col h-full">
-            <div className="flex justify-between items-center p-6 pb-4 border-b border-border shrink-0 bg-background">
-              <div>
-                <h2 className="text-xl font-semibold">
-                  Registrar {type === "garment" ? "Prenda Individual" : "Fardo"}
-                </h2>
+      <section className="flex-1 flex flex-col h-full overflow-hidden relative">
+        <div key={`${activeType}-${activeId}`} className="flex-1 flex flex-col h-full animate-fade-slide">
+          {isRegistering ? (
+            <div className="flex flex-col h-full">
+              <div className="flex justify-between items-center p-6 pb-4 border-b border-border shrink-0 bg-background">
+                <div>
+                  <h2 className="text-xl font-semibold">
+                    Registrar {activeType === "garment" ? "Prenda Individual" : "Fardo"}
+                  </h2>
                 <p className="text-xs text-text/70 font-mono mt-1">
                   Ingresa la información inicial para el inventario
                 </p>
@@ -436,7 +452,7 @@ const Inventory = ({
                   type="button"
                   onClick={() => handleSwitchType("bale")}
                   className={`px-3 py-1.5 rounded-md transition-all ${
-                    type === "bale"
+                    activeType === "bale"
                       ? "bg-background font-medium shadow-sm border border-border"
                       : "text-text/60 hover:text-text"
                   }`}
@@ -447,7 +463,7 @@ const Inventory = ({
                   type="button"
                   onClick={() => handleSwitchType("garment")}
                   className={`px-3 py-1.5 rounded-md transition-all ${
-                    type === "garment"
+                    activeType === "garment"
                       ? "bg-background font-medium shadow-sm border border-border"
                       : "text-text/60 hover:text-text"
                   }`}
@@ -466,7 +482,7 @@ const Inventory = ({
                   <InputComponent
                     label="Título / Nombre"
                     placeholder={
-                      type === "garment"
+                      activeType === "garment"
                         ? "Ej. Lote Prendas Verano"
                         : "Ej. Fardo Opción C"
                     }
@@ -538,7 +554,7 @@ const Inventory = ({
                     )}
                   </div>
 
-                  {type === "bale" ? (
+                  {activeType === "bale" ? (
                     <>
                       <div>
                         <InputComponent
@@ -660,19 +676,62 @@ const Inventory = ({
                       </div>
                     </>
                   ) : (
-                    <div>
-                      <InputComponent
-                        label="Cantidad"
-                        type="number"
-                        placeholder="1"
-                        {...register("quantity")}
-                      />
-                      {errors.quantity && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {errors.quantity.message}
-                        </p>
-                      )}
-                    </div>
+                    <>
+                      <div>
+                        <InputComponent
+                          label="Cantidad"
+                          type="number"
+                          placeholder="1"
+                          {...register("quantity")}
+                        />
+                        {errors.quantity && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {errors.quantity.message}
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <InputComponent
+                          label="Talla"
+                          placeholder="Ej. M, L, 42"
+                          {...register("size")}
+                        />
+                      </div>
+                      <div>
+                        <InputComponent
+                          label="Tipo de Prenda"
+                          placeholder="Ej. Polera, Jeans"
+                          {...register("garmentType")}
+                        />
+                      </div>
+                      <div>
+                        <InputComponent
+                          label="Grado"
+                          placeholder="Ej. Premium, A, B"
+                          {...register("grade")}
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <label
+                          htmlFor="baleId"
+                          className="block text-xs font-medium text-text/70 mb-1"
+                        >
+                          ¿Pertenece a un fardo? (Opcional)
+                        </label>
+                        <select
+                          id="baleId"
+                          {...register("baleId")}
+                          className="w-full p-2 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
+                        >
+                          <option value="">No, es individual</option>
+                          {bales.map((b) => (
+                            <option key={b._id} value={b._id}>
+                              {b.name} ({b.currentPieces}/{b.totalQuantity} piezas)
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </>
                   )}
                 </div>
 
@@ -717,10 +776,11 @@ const Inventory = ({
                 <ButtonComponent>Filtro rápido</ButtonComponent>
               </div>
             </div>
+
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 p-4 border-b border-border bg-primary-lighter/5 shrink-0">
               <span className="flex flex-col justify-center items-center">
                 <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-[0.15em] sm:tracking-[0.2em] text-text font-medium truncate">
-                  INVERSION
+                  INVERSIÓN
                 </p>
                 <p className="font-mono text-sm">{selectedCard.price}</p>
               </span>
@@ -747,6 +807,7 @@ const Inventory = ({
                 <p className="font-mono text-sm">{selectedCard.income}</p>
               </span>
             </div>
+
             {(() => {
               const clasificated =
                 calculateClassificationProgress(selectedCard);
@@ -765,57 +826,53 @@ const Inventory = ({
                 </article>
               );
             })()}
-            <div>
-              {selectedCard.totalQuantity > 0 ? (
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold mb-2">Piezas</h3>
-                  <ul className="flex flex-col gap-4">
-                    {selectedCard.pieces?.map((piece) => (
-                      <li
-                        key={piece._id}
-                        className="relative p-2 border border-border rounded-md flex flex-col gap-1"
-                      >
-                        <h4 className="flex items-center font-mono text-sm font-semibold gap-3">
-                          {piece.name}
-                          <p
-                            className={`flex items-center justify-center py-1 px-2 border rounded-2xl font-mono text-[10px] text-text/70 ${
-                              piece.status === "Disponible"
-                                ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                                : "bg-red-500/10 text-red-600 border-red-500/20"
-                            }`}
-                          >
-                            {piece.status}
-                          </p>
-                        </h4>
-                        <p className="font-mono text-[10px] text-text/70">
-                          Grado: {piece.grade || "N/A"}
-                        </p>
-                        <p className="font-mono text-[10px] text-text/70">
-                          {piece.size}-{piece.color}
-                        </p>
-                        <p className="absolute top-2 right-2 font-mono text-[10px] text-text/70">
-                          {piece.price}
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+
+            <div className="p-4">
+              <h3 className="text-lg font-semibold mb-3">Piezas</h3>
+              {selectedCard.pieces && selectedCard.pieces.length > 0 ? (
+                <ul className="flex flex-col gap-3">
+                  {selectedCard.pieces.map((piece) => (
+                    <li
+                      key={piece._id}
+                      className="relative p-3 border border-border rounded-md flex flex-col gap-1 bg-background"
+                    >
+                      <h4 className="flex items-center font-mono text-sm font-semibold gap-3">
+                        {piece.name}
+                        <span
+                          className={`flex items-center justify-center py-0.5 px-2 border rounded-2xl font-mono text-[10px] ${
+                            piece.status === "Disponible"
+                              ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                              : "bg-red-500/10 text-red-600 border-red-500/20"
+                          }`}
+                        >
+                          {piece.status}
+                        </span>
+                      </h4>
+                      <p className="font-mono text-[10px] text-text/70">
+                        Grado: {piece.grade || "N/A"}
+                      </p>
+                      <p className="font-mono text-[10px] text-text/70">
+                        {piece.size} - {piece.color}
+                      </p>
+                      <span className="absolute right-3 bottom-3 font-mono text-xs font-semibold">
+                        ${piece.price}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               ) : (
-                <div className="flex justify-center items-center h-40">
-                  <p className="text-lg font-semibold text-text/50">
-                    No hay piezas disponibles
-                  </p>
-                </div>
+                <p className="text-xs text-text/50 font-mono italic">
+                  No hay piezas individuales registradas en este elemento.
+                </p>
               )}
             </div>
           </div>
         ) : (
-          <div className="flex justify-center items-center h-full">
-            <p className="text-lg font-semibold text-text/50">
-              Selecciona una opción o crea una nueva
-            </p>
+          <div className="flex-1 flex items-center justify-center text-text/50 font-mono text-sm">
+            Selecciona una opción del panel izquierdo
           </div>
         )}
+        </div>
       </section>
     </div>
   );

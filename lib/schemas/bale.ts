@@ -16,9 +16,13 @@ export const formSchema = z
       .default("DISPONIBLE"),
     // Campos para Prenda Individual
     quantity: z.coerce.number().int().min(1, "Mínimo 1").optional(),
+    baleId: z.string().optional(),
+    size: z.string().optional(),
+    garmentType: z.string().optional(),
+    grade: z.string().optional(),
     // Campos para Fardo
-    totalQuantity: z.coerce.number().int().min(1, "El total de piezas es requerido"),
-    weight: z.string().min(1, "El peso es requerido"),
+    totalQuantity: z.coerce.number().int().min(1, "El total de piezas es requerido").optional(),
+    weight: z.string().optional(),
     sendPrice: z.string().optional(),
     pieceTypes: z.array(pieceTypeSchema).default([]),
   })
@@ -30,6 +34,14 @@ export const formSchema = z
           code: z.ZodIssueCode.custom,
           message: "Ingresa el número total de piezas del fardo",
           path: ["totalQuantity"],
+        });
+      }
+
+      if (!data.weight || data.weight.trim() === "") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "El peso es requerido",
+          path: ["weight"],
         });
       }
 
