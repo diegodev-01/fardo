@@ -1,61 +1,85 @@
 import { connectDB } from "@/lib/db";
 import baleModel from "@/lib/models/bale.model";
 import { withRole } from "@/lib/with-role";
+import { formSchema } from "@/lib/schemas/bale";
 import { NextResponse } from "next/server";
 
 export const GET = withRole(
   ["admin", "salesperson", "customer"],
   async (req, session) => {
-    await connectDB();
+    try {
+      await connectDB();
 
-    const searchParams = new URL(req.url);
-    const page = parseInt(searchParams.searchParams.get("page") || "1", 10);
-    const limit = parseInt(searchParams.searchParams.get("limit") || "10", 10);
-    const skip = (page - 1) * limit;
+      const { searchParams } = new URL(req.url);
+      const page = parseInt(searchParams.get("page") || "1", 10);
+      const limit = parseInt(searchParams.get("limit") || "10", 10);
+      const skip = (page - 1) * limit;
 
-    const query =
-      session.user.role === "admin" ? {} : { salesperson: session.user.id };
+      const query =
+        session.user.role === "admin" ? {} : { salesperson: session.user.id };
 
-    const [bales, totalDocs] = await Promise.all([
-      baleModel
-        .find(query)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      baleModel.countDocuments(query),
-    ]);
+      const [bales, totalDocs] = await Promise.all([
+        baleModel
+          .find(query)
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .lean(),
+        baleModel.countDocuments(query),
+      ]);
 
-    const totalPages = Math.ceil(totalDocs / limit);
+      const totalPages = Math.ceil(totalDocs / limit);
 
-    return NextResponse.json({
-      data: bales,
-      pagination: {
-        page,
-        limit,
-        total: totalDocs,
-        totalPages,
-        hasNextPage: page * limit < totalDocs,
-        hasPrevPage: page > 1,
-      },
-    });
+      return NextResponse.json({
+        data: bales,
+        pagination: {
+          page,
+          limit,
+          total: totalDocs,
+          totalPages,
+          hasNextPage: page * limit < totalDocs,
+          hasPrevPage: page > 1,
+        },
+      });
+    } catch (error) {
+      console.error("Error en GET /api/bales:", error);
+      return NextResponse.json(
+        { error: "Error interno al obtener los fardos" },
+        { status: 500 },
+      );
+    }
   },
 );
 
 export const POST = withRole(["admin", "salesperson"], async (req, session) => {
-  const { name, quantity, weight } = await req.json();
+  try {
+    const body = await req.json();
 
-  if (!name || typeof quantity !== "number" || typeof weight !== "number") {
-    return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
+    const validation = formSchema.safeParse(body);
+
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          error: "Datos del formulario inválidos",
+          details: validation.error.format(),
+        },
+        { status: 400 },
+      );
+    }
+
+    await connectDB();
+
+    const newBale = await baleModel.create({
+      ...validation.data,
+      salesperson: session.user.id,
+    });
+
+    return NextResponse.json(newBale, { status: 201 });
+  } catch (error) {
+    console.error("Error en POST /api/bales:", error);
+    return NextResponse.json(
+      { error: "Error interno al guardar el fardo" },
+      { status: 500 },
+    );
   }
-
-  await connectDB();
-  const newBale = await baleModel.create({
-    name,
-    quantity,
-    weight,
-    salesperson: session.user.id,
-  });
-
-  return NextResponse.json(newBale, { status: 201 });
 });
