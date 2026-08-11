@@ -115,6 +115,8 @@ const GarmentListItem = React.memo(({
   );
 });
 
+GarmentListItem.displayName = "GarmentListItem";
+
 const BaleListItem = React.memo(({
   card,
   isSelected,
@@ -171,6 +173,8 @@ const BaleListItem = React.memo(({
     </li>
   );
 });
+
+BaleListItem.displayName = "BaleListItem";
 
 const Inventory = ({
   total = 0,
