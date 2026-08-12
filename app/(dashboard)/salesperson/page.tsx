@@ -1,7 +1,7 @@
-export default function SalespersonOrdersPage() {
+export default function SalespersonPage() {
   return (
     <div>
-      <h1>Gestión de Órdenes</h1>
+      <h1>Panel de Vendedor</h1>
     </div>
   );
 }
