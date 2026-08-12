@@ -21,10 +21,12 @@ export const InputComponent = forwardRef<HTMLInputElement, InputComponentProps>(
           ref={ref}
           id={name}
           name={name}
-          className={`w-full p-2 text-sm bg-background border rounded-md ${
+          className={`w-full text-sm bg-background border rounded-md ${
+            props.type === 'color' ? 'h-10 p-1 cursor-pointer' : 'p-2'
+          } ${
             error
               ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-              : "border-border focus:outline-none focus:ring-1 focus:ring-primary" /* <-- Aquos faltaba cerrar la comilla " */
+              : "border-border focus:outline-none focus:ring-1 focus:ring-primary"
           } ${className}`}
           {...props}
         />

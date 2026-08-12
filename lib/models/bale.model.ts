@@ -26,7 +26,11 @@ const BaleSchema = new Schema<IBale>(
     totalQuantity: { type: Number, required: true },
     description: { type: String, required: false },
     income: { type: Number, default: 0 },
-    currentPieces: { type: Number, default: 0 },
+    currentPieces: {
+      type: Number,
+      required: true,
+      min: [0, "El stock de piezas no puede ser negativo"],
+    },
     state: {
       type: String,
       enum: ["ABIERTO", "DISPONIBLE", "VENDIDO"],

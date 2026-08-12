@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Fardos / Inventario", href: "/admin/inventory", icon: Package },
   { label: "Ventas", href: "/admin/orders", icon: ListOrdered },
+  { label: "Clientes", href: "/admin/customers", icon: ListOrdered },
   { label: "Reportes & Ventas", href: "/admin/reports", icon: BarChart3 },
 ];
 

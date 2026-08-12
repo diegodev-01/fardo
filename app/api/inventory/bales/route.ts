@@ -72,6 +72,7 @@ export const POST = withRole(["admin", "salesperson"], async (req, session) => {
     const newBale = await baleModel.create({
       ...validation.data,
       salesperson: session.user.id,
+      currentPieces: validation.data.totalQuantity
     });
 
     return NextResponse.json(newBale, { status: 201 });

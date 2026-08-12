@@ -11,6 +11,8 @@ export interface IGarment {
     size?: string;
     garmentType?: string;
     grade?: string;
+    description?: string;
+    color?: string;
     imageUrl?: string;
     createdAt: Date;
     updatedAt: Date;
@@ -32,6 +34,8 @@ const GarmentSchema = new Schema<IGarment>(
         size: { type: String, required: false },
         garmentType: { type: String, required: false },
         grade: { type: String, required: false },
+        description: { type: String, required: false },
+        color: { type: String, required: false },
         imageUrl: { type: String },
 
         createdAt: { type: Date, default: Date.now },

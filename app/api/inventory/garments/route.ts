@@ -31,12 +31,25 @@ export const GET = withRole(
             _id: null,
             totalQuantity: { $sum: "$quantity" },
             totalCost: { $sum: { $multiply: ["$quantity", "$price"] } },
+            availableQuantity: {
+              $sum: {
+                $cond: {
+                  if: { $eq: ["$state", "DISPONIBLE"] },
+                  then: "$quantity",
+                  else: 0,
+                },
+              },
+            },
           },
         },
       ]),
     ]);
 
-    const metrics = totals[0] ?? { totalQuantity: 0, totalCost: 0 };
+    const metrics = totals[0] ?? {
+      totalQuantity: 0,
+      totalCost: 0,
+      availableQuantity: 0,
+    };
     const totalPages = Math.ceil(totalDocs / limit);
 
     return NextResponse.json({
@@ -45,6 +58,7 @@ export const GET = withRole(
         totalDocs,
         totalQuantity: metrics.totalQuantity,
         totalCost: metrics.totalCost,
+        availableQuantity: metrics.availableQuantity,
       },
       pagination: {
         page,
@@ -59,7 +73,18 @@ export const GET = withRole(
 );
 
 export const POST = withRole(["admin", "salesperson"], async (req, session) => {
-  const { name, quantity, price, baleId, size, garmentType, grade } = await req.json();
+  const {
+    name,
+    quantity,
+    price,
+    baleId,
+    size,
+    garmentType,
+    grade,
+    description,
+    state,
+    color,
+  } = await req.json();
 
   if (!name || typeof quantity !== "number") {
     return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
@@ -74,6 +99,9 @@ export const POST = withRole(["admin", "salesperson"], async (req, session) => {
     size,
     garmentType,
     grade,
+    description,
+    state,
+    color,
     salesperson: session.user.id,
   };
 
@@ -83,10 +111,9 @@ export const POST = withRole(["admin", "salesperson"], async (req, session) => {
 
     const baleModel = (await import("@/lib/models/bale.model")).default;
     await baleModel.findByIdAndUpdate(baleId, {
-      $inc: { totalQuantity: -1 },
+      $inc: { currentPieces: -quantity },
     });
   }
-
   const newGarment = await garmentModel.create(garmentData);
 
   return NextResponse.json(newGarment, { status: 201 });

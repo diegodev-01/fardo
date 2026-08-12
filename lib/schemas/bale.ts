@@ -20,6 +20,7 @@ export const formSchema = z
     size: z.string().optional(),
     garmentType: z.string().optional(),
     grade: z.string().optional(),
+    color: z.string().optional(),
     // Campos para Fardo
     totalQuantity: z.coerce.number().int().min(1, "El total de piezas es requerido").optional(),
     weight: z.string().optional(),

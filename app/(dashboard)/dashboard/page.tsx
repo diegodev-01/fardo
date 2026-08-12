@@ -83,7 +83,6 @@ export default async function DashboardPage() {
             </div>
           </div>
           <div className="lg:col-span-5 flex flex-col gap-4 sm:gap-6">
-            {/* Cabecera de la sección */}
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-sm sm:text-base text-foreground tracking-tight">
                 Progreso de Pacas
