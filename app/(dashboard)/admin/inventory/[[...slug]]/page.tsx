@@ -97,7 +97,7 @@ const GarmentListItem = React.memo(
           <p className="font-mono text-xs text-text/70">
             {garmentCard.description}
           </p>
-          <div className="flex justify-between items-center mt-2">
+          <div className="flex flex-wrap justify-between items-center gap-y-1 mt-2">
             <span className="font-mono text-sm">
               <h5 className="text-[10px] font-medium text-text/50">Costo:</h5>
               {garmentCard.price}
@@ -168,7 +168,7 @@ const BaleListItem = React.memo(
                 card.state.trim().slice(1).toLowerCase()}
           </p>
           <p className="font-mono text-xs text-text/70">{card.description}</p>
-          <div className="flex justify-between items-center mt-2">
+          <div className="flex flex-wrap justify-between items-center gap-y-1 mt-2">
             <span className="font-mono text-sm">
               <h5 className="text-[10px] font-medium text-text/50">Precio:</h5>
               {card.price}
@@ -217,6 +217,9 @@ const Inventory = ({
 
   const [activeType, setActiveType] = useState<string>(slug?.[0] ?? "bale");
   const [activeId, setActiveId] = useState<string>(slug?.[1] ?? "register");
+
+  // Controla, en pantallas móviles, si se muestra el listado o el panel de detalle/registro.
+  const [showListMobile, setShowListMobile] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -345,6 +348,7 @@ const Inventory = ({
     setActiveType(card.type);
     setActiveId(card._id);
     setSelectedCard(card);
+    setShowListMobile(false);
     window.history.pushState(
       null,
       "",
@@ -355,6 +359,7 @@ const Inventory = ({
   const handleStartRegister = () => {
     setActiveType("bale");
     setActiveId("register");
+    setShowListMobile(false);
     window.history.pushState(null, "", "/admin/inventory/bale/register");
   };
 
@@ -362,6 +367,10 @@ const Inventory = ({
     setActiveType(newType);
     setActiveId("register");
     window.history.pushState(null, "", `/admin/inventory/${newType}/register`);
+  };
+
+  const handleBackToListMobile = () => {
+    setShowListMobile(true);
   };
 
   const handleAddPieceType = (selectedType: string) => {
@@ -413,29 +422,37 @@ const Inventory = ({
   };
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <aside className="w-80 border-r border-border flex flex-col shrink-0 h-full">
-        <div className="flex justify-between items-center p-4 shrink-0">
-          <h3 className="text-lg font-semibold">Prendas y fardos</h3>
+    <div className="flex flex-col md:flex-row h-screen overflow-hidden">
+      <aside
+        className={`${
+          showListMobile ? "flex" : "hidden"
+        } md:flex w-full md:w-80 border-r border-border flex-col shrink-0 h-full`}
+      >
+        <div className="flex justify-between items-center p-4 shrink-0 gap-2">
+          <h3 className="text-base sm:text-lg font-semibold truncate">
+            Prendas y fardos
+          </h3>
+          <div className="flex gap-2 sm:mr-0 mr-10">
           <ButtonComponent onClick={handleStartRegister}>
             + Nueva
           </ButtonComponent>
+          </div>
         </div>
         <div className="flex justify-around items-center p-4 border-t border-b border-border shrink-0">
-          <span className="flex flex-col items-center w-20">
-            <h2 className="text-xl font-semibold">{total}</h2>
+          <span className="flex flex-col items-center w-16 sm:w-20">
+            <h2 className="text-lg sm:text-xl font-semibold">{total}</h2>
             <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-[0.15em] sm:tracking-[0.2em] text-text font-medium truncate">
               TOTAL
             </p>
           </span>
-          <span className="flex flex-col items-center w-20">
-            <h2 className="text-xl font-semibold">{actives}</h2>
+          <span className="flex flex-col items-center w-16 sm:w-20">
+            <h2 className="text-lg sm:text-xl font-semibold">{actives}</h2>
             <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-[0.15em] sm:tracking-[0.2em] text-text font-medium truncate">
               ACTIVAS
             </p>
           </span>
-          <span className="flex flex-col items-center w-20">
-            <h2 className="text-xl font-semibold">{completes}</h2>
+          <span className="flex flex-col items-center w-16 sm:w-20">
+            <h2 className="text-lg sm:text-xl font-semibold">{completes}</h2>
             <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-[0.15em] sm:tracking-[0.2em] text-text font-medium truncate">
               COMPLETAS
             </p>
@@ -465,25 +482,38 @@ const Inventory = ({
         </ul>
       </aside>
 
-      <section className="flex-1 flex flex-col h-full overflow-hidden relative">
+      <section
+        className={`${
+          showListMobile ? "hidden" : "flex"
+        } md:flex flex-1 flex-col h-full overflow-hidden relative`}
+      >
         <div
           key={`${activeType}-${activeId}`}
           className="flex-1 flex flex-col h-full animate-fade-slide"
         >
           {isRegistering ? (
             <div className="flex flex-col h-full">
-              <div className="flex justify-between items-center p-6 pb-4 border-b border-border shrink-0 bg-background">
-                <div>
-                  <h2 className="text-xl font-semibold">
-                    Registrar{" "}
-                    {activeType === "garment" ? "Prenda Individual" : "Fardo"}
-                  </h2>
-                  <p className="text-xs text-text/70 font-mono mt-1">
-                    Ingresa la información inicial para el inventario
-                  </p>
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 p-4 sm:p-6 pb-4 border-b border-border shrink-0 bg-background">
+                <div className="flex items-start gap-2">
+                  <button
+                    type="button"
+                    onClick={handleBackToListMobile}
+                    className="md:hidden shrink-0 mt-0.5 text-xs font-mono text-text/60 hover:text-text px-2 py-1 border border-border rounded-md"
+                  >
+                    ← Volver
+                  </button>
+                  <div>
+                    <h2 className="text-lg sm:text-xl font-semibold">
+                      Registrar{" "}
+                      {activeType === "garment" ? "Prenda Individual" : "Fardo"}
+                    </h2>
+                    <p className="text-xs text-text/70 font-mono mt-1">
+                      Ingresa la información inicial para el inventario
+                    </p>
+                  </div>
                 </div>
 
-                <div className="flex p-1 bg-border/30 rounded-lg gap-1 font-mono text-xs">
+                <div className="flex p-1 bg-border/30 rounded-lg gap-1 font-mono text-xs w-fit">
                   <button
                     type="button"
                     onClick={() => handleSwitchType("bale")}
@@ -509,7 +539,7 @@ const Inventory = ({
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-6">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6">
                 <form
                   onSubmit={handleSubmit(handleFormSubmit)}
                   className="space-y-4 font-mono"
@@ -552,7 +582,7 @@ const Inventory = ({
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <InputComponent
                         type="number"
@@ -617,14 +647,14 @@ const Inventory = ({
                           />
                         </div>
 
-                        <div className="col-span-2 space-y-3 p-3 bg-border/10 border border-border rounded-md">
-                          <div className="flex justify-between items-center">
+                        <div className="col-span-1 sm:col-span-2 space-y-3 p-3 bg-border/10 border border-border rounded-md">
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                             <label className="block text-xs font-medium text-text/80">
                               Desglose por tipos de prenda
                             </label>
                             {targetTotal > 0 && (
                               <span
-                                className={`text-xs font-mono px-2 py-0.5 rounded-full ${
+                                className={`text-xs font-mono px-2 py-0.5 rounded-full w-fit ${
                                   totalAllocated === targetTotal
                                     ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
                                     : totalAllocated > targetTotal
@@ -669,9 +699,9 @@ const Inventory = ({
                                 return (
                                   <div
                                     key={field.id}
-                                    className="flex items-center gap-2 bg-background p-2 border border-border rounded-md"
+                                    className="flex flex-wrap sm:flex-nowrap items-center gap-2 bg-background p-2 border border-border rounded-md"
                                   >
-                                    <span className="text-xs font-medium w-1/2 truncate">
+                                    <span className="text-xs font-medium w-full sm:w-1/2 truncate">
                                       {optLabel}
                                     </span>
                                     <InputComponent
@@ -807,7 +837,7 @@ const Inventory = ({
                             ))}
                           </select>
                         </div>
-                        <div className="col-span-2">
+                        <div className="col-span-1 sm:col-span-2">
                           <label
                             htmlFor="baleId"
                             className="block text-xs font-medium text-text/70 mb-1"
@@ -832,7 +862,7 @@ const Inventory = ({
                     )}
                   </div>
 
-                  <div className="flex gap-3 pt-4 border-t border-border mt-6">
+                  <div className="flex flex-wrap gap-3 pt-4 border-t border-border mt-6">
                     <ButtonComponent type="submit">
                       Guardar Registro
                     </ButtonComponent>
@@ -849,9 +879,16 @@ const Inventory = ({
             </div>
           ) : selectedCard ? (
             <div className="flex flex-col h-full overflow-y-auto">
-              <div className="flex text-lg font-semibold px-6 py-5 border-b border-border gap-4 items-center shrink-0">
+              <div className="flex flex-col sm:flex-row text-lg font-semibold px-4 sm:px-6 py-5 border-b border-border gap-4 sm:items-center shrink-0">
+                <button
+                  type="button"
+                  onClick={handleBackToListMobile}
+                  className="md:hidden shrink-0 w-fit text-xs font-mono text-text/60 hover:text-text px-2 py-1 border border-border rounded-md"
+                >
+                  ← Volver
+                </button>
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
                     <h2 className="text-lg font-semibold">
                       {selectedCard.name}
                     </h2>
@@ -871,12 +908,12 @@ const Inventory = ({
                     {selectedCard.description}
                   </p>
                 </div>
-                <div className="ml-auto">
+                <div className="sm:ml-auto">
                   <ButtonComponent>Filtro rápido</ButtonComponent>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 p-4 border-b border-border bg-primary-lighter/5 shrink-0">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 p-4 border-b border-border bg-primary-lighter/5 shrink-0">
                 <span className="flex flex-col justify-center items-center">
                   <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-[0.15em] sm:tracking-[0.2em] text-text font-medium truncate">
                     INVERSIÓN
@@ -929,13 +966,13 @@ const Inventory = ({
               <div className="p-4">
                 <h3 className="text-lg font-semibold mb-3">Piezas</h3>
                 {selectedCard.pieces && selectedCard.pieces.length > 0 ? (
-                  <ul className="flex flex-col gap-3">
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
                     {selectedCard.pieces.map((piece) => (
                       <li
                         key={piece._id}
                         className="relative p-3 border border-border rounded-md flex flex-col gap-1 bg-background"
                       >
-                        <h4 className="flex items-center font-mono text-sm font-semibold gap-3">
+                        <h4 className="flex flex-wrap items-center font-mono text-sm font-semibold gap-3">
                           {piece.name}
                           <span
                             className={`flex items-center justify-center py-0.5 px-2 border rounded-2xl font-mono text-[10px] ${
@@ -967,7 +1004,7 @@ const Inventory = ({
               </div>
             </div>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-text/50 font-mono text-sm">
+            <div className="flex-1 flex items-center justify-center text-text/50 font-mono text-sm text-center px-4">
               Selecciona una opción del panel izquierdo
             </div>
           )}
