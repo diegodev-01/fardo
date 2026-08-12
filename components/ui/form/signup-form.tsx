@@ -5,12 +5,15 @@ const initialState = {
   name: "",
   email: "",
   password: "",
-}
+};
 
 export function SignupForm() {
-  
   return (
-    <form action={signup}>
+    <form
+      action={async (formData) => {
+        await signup(formData);
+      }}
+    >
       <InputComponent
         label="Name"
         name="name"
