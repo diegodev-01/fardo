@@ -1,3 +1,5 @@
+"use server";
+
 import { signup } from "@/lib/services/auth.service";
 import { InputComponent } from "./input-component";
 
