@@ -1,5 +1,5 @@
 import { withRole } from "@/lib/with-role";
-import { NextRequest, NextResponse } from "next/server"; // ✅ Importación limpia
+import { NextRequest, NextResponse } from "next/server";
 
 export const GET = withRole<{ id: string }>(
   ["admin", "salesperson"],

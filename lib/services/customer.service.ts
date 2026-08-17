@@ -1,65 +1,49 @@
+import { connectDB } from "../db";
+import customerModel from "../models/customer.model";
 import { Customer } from "../schemas/customer";
 
 export const getCustomers = async () => {
   try {
-    const response = await fetch("/api/customers", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    await connectDB();
+    const customers = await customerModel.find({}).lean();
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Error fetching customers");
-    }
-
-    return await response.json();
+    return customers.map((customer) => ({
+      ...customer,
+      _id: customer._id.toString(),
+      createdAt: customer.createdAt
+        ? new Date(customer.createdAt).toISOString()
+        : undefined,
+      updatedAt: customer.updatedAt
+        ? new Date(customer.updatedAt).toISOString()
+        : undefined,
+    }));
   } catch (error) {
     console.error("Error fetching customers:", error);
-    throw error;
+    throw new Error("Error al obtener los clientes");
   }
 };
 
 export const createCustomer = async (customerData: Customer) => {
   try {
-    const response = await fetch("/api/customers", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(customerData),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Error creating customer");
-    }
-
-    return await response.json();
+    await connectDB();
+    const newCustomer = await customerModel.create(customerData);
+    return newCustomer;
   } catch (error) {
     console.error("Error creating customer:", error);
-    throw error;
+    throw new Error("Error al crear el cliente en la base de datos");
   }
 };
 
 export const getCustomerById = async (id: string) => {
   try {
-    const response = await fetch(`/api/customers/${id}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    await connectDB();
+    const customer = await customerModel.findById(id).lean();
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Error fetching customer");
-    }
+    if (!customer) return null;
 
-    return await response.json();
+    return customer;
   } catch (error) {
-    console.error("Error fetching customer:", error);
-    throw error;
+    console.error("Error fetching customer by ID:", error);
+    return null;
   }
 };
