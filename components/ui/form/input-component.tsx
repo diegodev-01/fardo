@@ -22,7 +22,7 @@ export const InputComponent = forwardRef<HTMLInputElement, InputComponentProps>(
           id={name}
           name={name}
           className={`w-full text-sm bg-background border rounded-md ${
-            props.type === 'color' ? 'h-10 p-1 cursor-pointer' : 'p-2'
+            props.type === "color" ? "h-10 p-1 cursor-pointer" : "p-2"
           } ${
             error
               ? "border-red-500 focus:border-red-500 focus:ring-red-500"
@@ -30,7 +30,7 @@ export const InputComponent = forwardRef<HTMLInputElement, InputComponentProps>(
           } ${className}`}
           {...props}
         />
-        {error && <span className="text-xs text-red-500 ml-1.5">{error}</span>}
+        {error && <span className="text-red-500 text-xs mt-1">{error}</span>}
       </div>
     );
   },

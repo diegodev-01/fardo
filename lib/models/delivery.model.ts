@@ -1,6 +1,6 @@
 import { model, models, Schema } from "mongoose";
 
-export type DeliveryMethodType = "flash" | "punto fijo" | "envio";
+export type DeliveryMethodType = "casillero" | "punto fijo" | "envio";
 
 export interface LocationDetails {
   name: string;
@@ -11,7 +11,7 @@ export interface LocationDetails {
 export interface IDelivery {
   _id: string;
   name: string;
-  phone: string;
+  phone?: string;
   //   type: "ENVIO" | "ENTREGA";
   deliveryMethod: DeliveryMethodType;
   address?: string;
@@ -23,13 +23,13 @@ export interface IDelivery {
 const DeliverySchema = new Schema<IDelivery>(
   {
     name: { type: String, required: true },
-    phone: { type: String, required: true },
+    phone: { type: String, required: false },
     deliveryMethod: {
       type: String,
-      enum: ["flash", "punto fijo", "envio"],
+      enum: ["casillero", "punto fijo", "envio"],
       required: true,
     },
-    address: { type: String },
+    address: { type: String, required: false },
 
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },

@@ -1,17 +1,24 @@
-// lib/with-role.ts
 import { auth } from "@/lib/auth";
 import { type Session } from "next-auth";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-type HandlerWithSession = (
-  req: Request,
+export type Roles = "admin" | "salesperson" | "customer";
+
+export type RouteContext<T = Record<string, string>> = {
+  params: Promise<T>;
+};
+
+type HandlerWithSession<T = Record<string, string>> = (
+  req: NextRequest,
   session: Session,
+  context: RouteContext<T>,
 ) => Promise<NextResponse>;
 
-type Roles = "admin" | "salesperson" | "customer";
-
-export function withRole(roles: Roles[], handler: HandlerWithSession) {
-  return async (req: Request) => {
+export function withRole<T = Record<string, string>>(
+  roles: Roles[],
+  handler: HandlerWithSession<T>,
+) {
+  return async (req: NextRequest, context: RouteContext<T>) => {
     try {
       const session = await auth();
 
@@ -24,7 +31,7 @@ export function withRole(roles: Roles[], handler: HandlerWithSession) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
 
-      return await handler(req, session);
+      return await handler(req, session, context);
     } catch (error) {
       return NextResponse.json(
         { error: "Internal Server Error", details: (error as Error).message },

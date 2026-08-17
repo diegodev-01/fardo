@@ -869,7 +869,7 @@ const Inventory = ({
                     <button
                       type="button"
                       onClick={() => router.push("/admin/inventory")}
-                      className="px-4 py-2 text-xs text-text/70 hover:text-text font-mono transition-colors"
+                      className="px-4 py-2 text-xs text-danger/70 hover:text-text font-mono transition-colors"
                     >
                       Cancelar
                     </button>

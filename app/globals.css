@@ -11,6 +11,7 @@
   --primary-foreground: #0f0e0a;
   --card: #f4fffe;
   --border: #f4fffe;
+  --danger: #ff0000;
 }
 
 .dark {
@@ -24,6 +25,7 @@
   --card: #1d1d1d;
   --border: #2b2c2c;
   --secondary: #ffaa00;
+  --danger: #ff0000;
 }
 
 @theme inline {
@@ -37,6 +39,7 @@
   --color-card: var(--card);
   --color-border: var(--border);
   --color-secondary: var(--secondary);
+  --color-danger: var(--danger);
 
   --font-sans: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   --font-mono:

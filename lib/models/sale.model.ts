@@ -10,6 +10,7 @@ export interface ISale {
   comprobanteUrl?: string;
 
   deliveryId?: string;
+  observations?: string;
 
   createdAt: Date;
   updatedAt: Date;
@@ -30,6 +31,7 @@ const SaleSchema = new Schema<ISale>(
     comprobanteUrl: { type: String },
 
     deliveryId: { type: String },
+    observations: { type: String },
 
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
