@@ -1,3 +1,4 @@
+import "server-only";
 import { connectDB } from "../db";
 import customerModel from "../models/customer.model";
 import { Customer } from "../schemas/customer";

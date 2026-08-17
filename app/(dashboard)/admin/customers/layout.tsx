@@ -1,4 +1,3 @@
-// app/admin/customers/layout.tsx
 import { ReactNode } from "react";
 import CustomerAside from "./components/customer-aside";
 import { getCustomers } from "@/lib/services/customer.service";

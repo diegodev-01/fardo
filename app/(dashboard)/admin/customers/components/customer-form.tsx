@@ -51,7 +51,7 @@ const CustomerForm = () => {
       lastname: "",
       phone: "",
       address: {
-        department: "",
+        department: "Cochabamba",
         address: "",
         city: "",
       },
@@ -96,7 +96,7 @@ const CustomerForm = () => {
                 htmlFor="department"
                 className="block text-xs font-medium text-text/70 mb-1"
               >
-                Departamento
+                Departamento (En caso de envio)
               </label>
               <select
                 id="department"
