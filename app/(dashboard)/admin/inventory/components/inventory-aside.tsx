@@ -36,6 +36,21 @@ export function InventoryAside() {
     router.push("/admin/inventory/register?type=bale");
   };
 
+  const [filter, setFilter] = React.useState<"todos" | "disponibles" | "agotados">("todos");
+
+  const filteredGarment = filter === "todos" || 
+    (filter === "disponibles" && (garmentCard?.totalQuantity ?? 0) > 0) || 
+    (filter === "agotados" && (garmentCard?.totalQuantity ?? 0) === 0) 
+    ? garmentCard : undefined;
+
+  const filteredBales = bales.filter((bale) => {
+    if (filter === "todos") return true;
+    const isAvailable = bale.state === "DISPONIBLE";
+    if (filter === "disponibles") return isAvailable;
+    if (filter === "agotados") return !isAvailable;
+    return true;
+  });
+
   return (
     <aside
       className={`${
@@ -72,14 +87,33 @@ export function InventoryAside() {
           </p>
         </span>
       </div>
-      <ul className="p-4 space-y-2 overflow-y-auto flex-1">
-        <GarmentListItem
-          garmentCard={garmentCard}
-          isSelected={activeId === "garments-total" && activeType === "garment"}
-          onSelect={handleSelectCard}
-        />
 
-        {bales.map((card, index) => (
+      <div className="flex px-4 py-3 gap-2 overflow-x-auto border-b border-border shrink-0">
+        {["todos", "disponibles", "agotados"].map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f as any)}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
+              filter === f
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-surface text-text/70 border-border hover:bg-background"
+            }`}
+          >
+            {f.charAt(0).toUpperCase() + f.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      <ul className="p-4 space-y-2 overflow-y-auto flex-1">
+        {filteredGarment && (
+          <GarmentListItem
+            garmentCard={filteredGarment}
+            isSelected={activeId === "garments-total" && activeType === "garment"}
+            onSelect={handleSelectCard}
+          />
+        )}
+
+        {filteredBales.map((card, index) => (
           <BaleListItem
             key={`bale-${card._id || index}`}
             card={card}
