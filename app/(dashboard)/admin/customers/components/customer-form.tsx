@@ -35,7 +35,11 @@ const BOLIVIA_DEPARTAMENTOS: Record<string, string[]> = {
 
 const DEPARTAMENTOS = Object.keys(BOLIVIA_DEPARTAMENTOS);
 
-const CustomerForm = () => {
+interface CustomerFormProps {
+  onSuccess?: (newCustomer: Customer) => void;
+}
+
+const CustomerForm = ({ onSuccess }: CustomerFormProps) => {
   const router = useRouter();
   const {
     register,
@@ -60,8 +64,17 @@ const CustomerForm = () => {
   });
   const selectedDepartment = watch("address.department");
 
-  const handleFormSubmit = (data: Customer) => {
-    createCustomerAction(data);
+  const handleFormSubmit = async (data: Customer) => {
+    const result = await createCustomerAction(data);
+
+    if (!result.success || !result.data) {
+      console.error(result.error ?? "Failed to create customer");
+      return;
+    }
+
+    if (onSuccess) {
+      onSuccess(result.data as Customer);
+    }
     console.log("Form submitted with data:", data);
   };
   return (
@@ -96,7 +109,7 @@ const CustomerForm = () => {
                 htmlFor="department"
                 className="block text-xs font-medium text-text/70 mb-1"
               >
-                Departamento (En caso de envio)
+                Departamento (envio)
               </label>
               <select
                 id="department"

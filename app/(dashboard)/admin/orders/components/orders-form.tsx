@@ -1,44 +1,23 @@
+"use client";
+
 import { ButtonComponent } from "@/components/ui/button-component";
 import { InputComponent } from "@/components/ui/form/input-component";
 import {
   SearchableSelect,
   SelectOption,
 } from "@/components/ui/form/searchable-select";
-import { Customer } from "@/lib/schemas/customer";
+import { Modal } from "@/components/ui/modal";
+import { ICustomer } from "@/lib/models/customer.model";
 import { saleSchema, SaleSchemaType } from "@/lib/schemas/sale";
-import { createCustomer } from "@/lib/services/customer.service";
+import { getCustomersAction } from "@/lib/actions/customer.actions";
+
+import { getDeliveriesAction } from "@/lib/actions/delivery.action";
+import { getGarmentsAction } from "@/lib/actions/garment.actions";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-
-const INITIAL_CUSTOMERS: SelectOption[] = [
-  { value: "cust_1", label: "Juan Pérez", searchTerms: "76543210 customer1" },
-  { value: "cust_2", label: "María Gómez", searchTerms: "71234567 customer2" },
-  { value: "cust_3", label: "Carlos López", searchTerms: "78901234 customer3" },
-];
-
-const garments: SelectOption[] = [
-  { value: "garment_1", label: "Camisa Azul", searchTerms: "camisa azul" },
-  {
-    value: "garment_2",
-    label: "Pantalón Negro",
-    searchTerms: "pantalón negro",
-  },
-];
-
-const deliverys: SelectOption[] = [
-  {
-    value: "delivery_1",
-    label: "Entrega a domicilio",
-    searchTerms: "entrega domicilio",
-  },
-  {
-    value: "delivery_2",
-    label: "Retiro en tienda",
-    searchTerms: "retiro tienda",
-  },
-];
+import CustomerForm from "../../customers/components/customer-form";
 
 const paymentStates = [
   { value: "PENDIENTE", label: "Pendiente" },
@@ -46,9 +25,17 @@ const paymentStates = [
 ];
 
 const OrdersForm = () => {
-  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
-  const [customers, setCustomers] = useState<SelectOption[]>(INITIAL_CUSTOMERS);
-  const [newCustomerName, setNewCustomerName] = useState("");
+  const [activeModal, setActiveModal] = useState<
+    "customer" | "garment" | "delivery" | null
+  >(null);
+
+  // Estados locales para almacenar los datos cargados desde la BD
+  const [customersOptions, setCustomersOptions] = useState<SelectOption[]>([]);
+  const [garmentsOptions, setGarmentsOptions] = useState<SelectOption[]>([]);
+  const [deliveriesOptions, setDeliveriesOptions] = useState<SelectOption[]>(
+    [],
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const router = useRouter();
   const {
@@ -57,7 +44,7 @@ const OrdersForm = () => {
     control,
     setValue,
     formState: { errors },
-  } = useForm({
+  } = useForm<SaleSchemaType>({
     resolver: zodResolver(saleSchema),
     defaultValues: {
       customerId: "",
@@ -69,30 +56,89 @@ const OrdersForm = () => {
     },
   });
 
-  const handleCreateCustomer = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCustomerName.trim()) return;
+  // 2. Carga inicial llamando al Server Action
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
 
-    const newId = `cust_${Date.now()}`;
-    const newOption: SelectOption = {
-      value: newId,
-      label: newCustomerName,
-      searchTerms: `${newCustomerName} nuevo`,
+        // Llamada al Server Action (sin tocar la BD directamente desde el navegador)
+        const customersData = await getCustomersAction();
+        const garmentsData = await getGarmentsAction();
+        const deliveriesData = await getDeliveriesAction();
+        console.log(customersData);
+
+        // Transformar clientes a SelectOption
+        if (customersData && Array.isArray(customersData.data)) {
+          const mappedCustomers: SelectOption[] = customersData.data.map(
+            (c: any) => ({
+              value: c._id,
+              label: `${c.name} ${c.lastname}`,
+              searchTerms: `${c.name} ${c.lastname} ${c.phone || ""}`,
+            }),
+          );
+          setCustomersOptions(mappedCustomers);
+        }
+
+        if (garmentsData) {
+          setGarmentsOptions(
+            garmentsData.map((g: any) => ({
+              value: g._id,
+              label: g.name,
+              searchTerms: `${g.name} ${g.code || ""}`,
+            })),
+          );
+        }
+
+        if (deliveriesData) {
+          setDeliveriesOptions(
+            deliveriesData.map((d: any) => ({
+              value: d._id,
+              label: d.name,
+              searchTerms: d.name,
+            })),
+          );
+        }
+      } catch (error) {
+        console.error("Error al cargar opciones del formulario:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    // 1. Agregar a la lista disponible
-    setCustomers((prev) => [...prev, newOption]);
+    fetchData();
+  }, []);
 
-    // 2. Auto-seleccionar en el formulario inmediatamente
-    setValue("customerId", newId, { shouldValidate: true });
+  console.log(customersOptions);
 
-    // 3. Limpiar y cerrar modal
-    setNewCustomerName("");
-    setIsCustomerModalOpen(false);
+  // 3. Callback al crear un cliente nuevo desde el modal
+  const handleCustomerCreated = (newCustomer: ICustomer) => {
+    const newOption: SelectOption = {
+      value: newCustomer._id!,
+      label: `${newCustomer.name} ${newCustomer.lastname}`,
+      searchTerms: `${newCustomer.name} ${newCustomer.lastname} ${newCustomer.phone || ""}`,
+    };
+
+    // Agregar a la lista del select
+    setCustomersOptions((prev) => [...prev, newOption]);
+
+    // Auto-seleccionar en el formulario
+    setValue("customerId", newCustomer._id!, { shouldValidate: true });
+
+    // Cerrar el modal
+    setActiveModal(null);
   };
 
-  const handleFormSubmit = (data: SaleSchemaType) => {
-    console.log("Datos del formulario:", data);
+  // 4. Submit del formulario
+  const handleFormSubmit = async (data: SaleSchemaType) => {
+    console.log("Datos a guardar:", data);
+    try {
+      // Aquí ejecutas el Server Action para guardar la venta/orden:
+      // await createSaleAction(data);
+      // router.push("/admin/orders");
+    } catch (error) {
+      console.error("Error al guardar la orden:", error);
+    }
   };
 
   return (
@@ -113,10 +159,14 @@ const OrdersForm = () => {
                   control={control}
                   render={({ field }) => (
                     <SearchableSelect
-                      options={customers}
+                      options={customersOptions}
                       value={field.value}
                       onChange={field.onChange}
-                      placeholder="Buscar o seleccionar cliente..."
+                      placeholder={
+                        isLoading
+                          ? "Cargando clientes..."
+                          : "Buscar o seleccionar cliente..."
+                      }
                       error={errors.customerId?.message}
                     />
                   )}
@@ -126,7 +176,7 @@ const OrdersForm = () => {
                 <ButtonComponent
                   type="button"
                   style="secondary"
-                  onClick={() => setIsCustomerModalOpen(true)}
+                  onClick={() => setActiveModal("customer")}
                 >
                   Nuevo cliente
                 </ButtonComponent>
@@ -142,7 +192,7 @@ const OrdersForm = () => {
                   control={control}
                   render={({ field }) => (
                     <SearchableSelect
-                      options={garments}
+                      options={garmentsOptions}
                       value={field.value}
                       onChange={field.onChange}
                       placeholder="Buscar o seleccionar prenda..."
@@ -155,12 +205,14 @@ const OrdersForm = () => {
                 <ButtonComponent
                   type="button"
                   style="secondary"
-                  // onClick={() => setIsGarmentModalOpen(true)}
+                  onClick={() => setActiveModal("garment")}
                 >
                   Nueva prenda
                 </ButtonComponent>
               </span>
             </div>
+
+            {/* Entrega */}
             <div className="flex gap-2">
               <span className="flex-1">
                 <label className="block text-xs font-medium text-text/70 mb-1">
@@ -171,8 +223,8 @@ const OrdersForm = () => {
                   control={control}
                   render={({ field }) => (
                     <SearchableSelect
-                      options={deliverys}
-                      value={field.value!}
+                      options={deliveriesOptions}
+                      value={field.value ?? ""}
                       onChange={field.onChange}
                       placeholder="Buscar o seleccionar entrega..."
                       error={errors.deliveryId?.message}
@@ -184,12 +236,14 @@ const OrdersForm = () => {
                 <ButtonComponent
                   type="button"
                   style="secondary"
-                  // onClick={() => setIsDeliveryModalOpen(true)}
+                  onClick={() => setActiveModal("delivery")}
                 >
                   Nuevo tipo de entrega
                 </ButtonComponent>
               </span>
             </div>
+
+            {/* Estado de pago */}
             <div>
               <label
                 htmlFor="paymentState"
@@ -223,13 +277,13 @@ const OrdersForm = () => {
                 label="Precio final (Bs.)"
                 type="number"
                 placeholder="Precio final en Bs., ejemplo: 100.00"
-                {...register("price")}
+                {...register("price", { valueAsNumber: true })}
                 error={errors.price?.message}
               />
             </div>
             <div>
               <InputComponent
-                label="Observaciones"
+                label="Observaciones(Opcional)"
                 placeholder="Observaciones sobre el pedido"
                 {...register("observations")}
                 error={errors.observations?.message}
@@ -249,6 +303,30 @@ const OrdersForm = () => {
           </div>
         </form>
       </div>
+
+      {activeModal && (
+        <Modal
+          isOpen={activeModal !== null}
+          onClose={() => setActiveModal(null)}
+          title={
+            activeModal === "customer"
+              ? "Registra un nuevo cliente"
+              : activeModal === "delivery"
+                ? "Registra un nuevo tipo de entrega"
+                : "Registra una nueva prenda o fardo"
+          }
+        >
+          <>
+            {activeModal === "customer" ? (
+              <CustomerForm onSuccess={handleCustomerCreated} />
+            ) : activeModal === "delivery" ? (
+              <div>Form de tipo de entrega</div>
+            ) : (
+              <div>Form de Prenda individual o de Fardo</div>
+            )}
+          </>
+        </Modal>
+      )}
     </div>
   );
 };

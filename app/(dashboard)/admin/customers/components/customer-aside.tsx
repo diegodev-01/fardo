@@ -4,7 +4,7 @@ import { ButtonComponent } from "@/components/ui/button-component";
 import { ICustomer } from "@/lib/models/customer.model";
 import { User } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation"; // Importación correcta
+import { usePathname } from "next/navigation";
 import CustomerListItem from "./customer-list-items";
 
 interface CustomerAsideProps {
@@ -14,13 +14,19 @@ interface CustomerAsideProps {
 const CustomerAside = ({ initialCustomers }: CustomerAsideProps) => {
   const pathname = usePathname();
 
+  const isBaseRoute = pathname === "/admin/customers";
+
   return (
-    <aside className="w-full md:w-80 border-r border-border flex flex-col shrink-0 h-full">
+    <aside
+      className={`w-full md:w-80 border-r border-border flex-col shrink-0 h-full ${
+        isBaseRoute ? "flex" : "hidden md:flex"
+      }`}
+    >
       <div className="flex justify-between items-center p-4 shrink-0 gap-2">
         <h3 className="text-base sm:text-lg font-semibold truncate">
           Clientes
         </h3>
-        <Link href="/admin/customers/register">
+        <Link href="/admin/customers/register" className="sm:mr-0 mr-12">
           <ButtonComponent>+ Nuevo</ButtonComponent>
         </Link>
       </div>
@@ -31,7 +37,7 @@ const CustomerAside = ({ initialCustomers }: CustomerAsideProps) => {
           Registrados
         </p>
         <p className="font-mono text-xs text-text/70">
-          {initialCustomers.length} 
+          {initialCustomers.length}
         </p>
       </div>
 
