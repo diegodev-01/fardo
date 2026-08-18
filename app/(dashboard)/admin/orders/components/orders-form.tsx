@@ -80,9 +80,9 @@ const OrdersForm = () => {
           setCustomersOptions(mappedCustomers);
         }
 
-        if (garmentsData) {
+        if (garmentsData.data) {
           setGarmentsOptions(
-            garmentsData.map((g: any) => ({
+            garmentsData.data.map((g: any) => ({
               value: g._id,
               label: g.name,
               searchTerms: `${g.name} ${g.code || ""}`,
@@ -90,9 +90,9 @@ const OrdersForm = () => {
           );
         }
 
-        if (deliveriesData) {
+        if (deliveriesData.data) {
           setDeliveriesOptions(
-            deliveriesData.map((d: any) => ({
+            deliveriesData.data.map((d: any) => ({
               value: d._id,
               label: d.name,
               searchTerms: d.name,

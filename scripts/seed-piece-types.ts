@@ -1,4 +1,4 @@
-import { connectDB } from "../lib/db";
+import mongoose from "mongoose";
 import PieceTypeModel from "../lib/models/piece-type.model";
 
 const PIECE_OPTIONS = [
@@ -21,8 +21,16 @@ const PIECE_OPTIONS = [
 
 async function seed() {
   try {
+    const mongoUri = process.env.MONGODB_URI;
+
+    if (!mongoUri) {
+      throw new Error(
+        "No se encontró la variable MONGODB_URI en las variables de entorno.",
+      );
+    }
+
     console.log("Conectando a la base de datos...");
-    await connectDB();
+    await mongoose.connect(mongoUri);
 
     console.log("Insertando/Actualizando tipos de prendas...");
 
@@ -40,6 +48,7 @@ async function seed() {
     console.log(`- Insertados: ${result.upsertedCount}`);
     console.log(`- Modificados: ${result.modifiedCount}`);
 
+    await mongoose.disconnect();
     process.exit(0);
   } catch (error) {
     console.error("❌ Error ejecutando el seed:", error);

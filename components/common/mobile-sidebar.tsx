@@ -10,6 +10,10 @@ import {
   LayoutDashboard,
   ListOrdered,
   Package,
+  Settings,
+  ChevronDown,
+  Truck,
+  CreditCard,
 } from "lucide-react";
 import { SidebarFooter } from "@/components/common/sidebar-footer";
 
@@ -31,6 +35,7 @@ export function MobileSidebar({
   onSignOut: () => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
   return (
@@ -52,7 +57,7 @@ export function MobileSidebar({
 
       <aside
         className={`
-          w-64 border-r bg-card flex flex-col justify-between border-l-2 border-primary-lighter
+          w-64 border-r bg-card flex flex-col justify-between border-l border-primary-lighter/20
           fixed md:sticky top-0 h-screen z-50
           transition-transform duration-300 ease-in-out
           ${open ? "translate-x-0" : "-translate-x-full"}
@@ -106,11 +111,58 @@ export function MobileSidebar({
           </nav>
         </div>
 
-        <SidebarFooter
-          userName={userName}
-          userRole={userRole}
-          onSignOut={onSignOut}
-        />
+        <div className="p-6 pt-0 space-y-1">
+          {/* Botón Configuración */}
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="flex w-full items-center justify-between px-3 py-2.5 text-sm font-medium rounded-xl transition-colors text-text hover:text-foreground hover:bg-primary/10"
+          >
+            <div className="flex items-center gap-3">
+              <Settings className="h-4 w-4 text-primary" />
+              <span>Configuración</span>
+            </div>
+            <ChevronDown
+              className={`h-4 w-4 transition-transform duration-300 ease-in-out ${
+                isOpen ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+
+          {/* Submenú Animado con Grid */}
+          <div
+            className={`grid transition-all duration-300 ease-in-out ${
+              isOpen
+                ? "grid-rows-[1fr] opacity-100 mt-1"
+                : "grid-rows-[0fr] opacity-0 mt-0"
+            }`}
+          >
+            <div className="overflow-hidden pl-7 pr-1 space-y-1">
+              <Link
+                href="/admin/settings/delivery"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-lg text-muted-foreground hover:text-foreground hover:bg-primary/10 transition-colors"
+              >
+                <Truck className="h-3.5 w-3.5 text-primary" />
+                <span>Tipos de Entrega</span>
+              </Link>
+
+              {/* <Link
+                href="/admin/settings/payments"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-lg text-muted-foreground hover:text-foreground hover:bg-primary/10 transition-colors"
+              >
+                <CreditCard className="h-3.5 w-3.5 text-primary" />
+                <span>Métodos de Pago</span>
+              </Link> */}
+            </div>
+          </div>
+
+          <SidebarFooter
+            userName={userName}
+            userRole={userRole}
+            onSignOut={onSignOut}
+          />
+        </div>
       </aside>
     </>
   );
