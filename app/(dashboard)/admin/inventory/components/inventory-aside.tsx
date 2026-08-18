@@ -19,6 +19,10 @@ export function InventoryAside() {
     completes,
     showListMobile,
     setShowListMobile,
+    page,
+    setPage,
+    totalPages,
+    refresh
   } = useInventory();
 
   // /admin/inventory/[id]  ->  segments = ["admin", "inventory", id]
@@ -34,6 +38,22 @@ export function InventoryAside() {
   const handleStartRegister = () => {
     setShowListMobile(false);
     router.push("/admin/inventory/register?type=bale");
+  };
+
+  const handleDeleteBale = async (id: string) => {
+    if (!confirm("¿Seguro que deseas eliminar este fardo?")) return;
+    const { softDeleteBaleAction } = await import("@/lib/actions/bale.action");
+    const res = await softDeleteBaleAction(id);
+    if (res.success) {
+      refresh();
+    } else {
+      alert(res.error || "Error al eliminar");
+    }
+  };
+
+  const handleEditBale = (id: string) => {
+    // Assuming you have or will have an edit page like:
+    router.push(`/admin/inventory/edit/${id}`);
   };
 
   const [filter, setFilter] = React.useState<"todos" | "disponibles" | "agotados">("todos");
@@ -119,9 +139,33 @@ export function InventoryAside() {
             card={card}
             isSelected={activeId === String(card._id) && activeType === "bale"}
             onSelect={handleSelectCard}
+            onDelete={handleDeleteBale}
+            onEdit={handleEditBale}
           />
         ))}
       </ul>
+
+      {totalPages > 1 && (
+        <div className="flex justify-between items-center p-4 border-t border-border shrink-0">
+          <button
+            disabled={page <= 1}
+            onClick={() => setPage(page - 1)}
+            className="px-3 py-1 text-xs border rounded disabled:opacity-50"
+          >
+            Anterior
+          </button>
+          <span className="text-xs text-text/60">
+            Página {page} de {totalPages}
+          </span>
+          <button
+            disabled={page >= totalPages}
+            onClick={() => setPage(page + 1)}
+            className="px-3 py-1 text-xs border rounded disabled:opacity-50"
+          >
+            Siguiente
+          </button>
+        </div>
+      )}
     </aside>
   );
 }

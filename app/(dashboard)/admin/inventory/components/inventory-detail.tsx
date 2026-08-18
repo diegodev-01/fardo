@@ -10,6 +10,15 @@ export function InventoryDetail({ card }: { card: Card }) {
   const { setShowListMobile } = useInventory();
   const clasificated = calculateClassificationProgress(card);
 
+  const [pieceFilter, setPieceFilter] = React.useState<"todos" | "disponibles" | "vendidos">("todos");
+
+  const filteredPieces = card.pieces?.filter((piece) => {
+    if (pieceFilter === "todos") return true;
+    if (pieceFilter === "disponibles") return piece.state === "DISPONIBLE";
+    if (pieceFilter === "vendidos") return piece.state !== "DISPONIBLE";
+    return true;
+  });
+
   return (
     <div className="flex flex-col h-full overflow-y-auto">
       <div className="flex flex-col sm:flex-row text-lg font-semibold px-4 sm:px-6 py-5 border-b border-border gap-4 sm:items-center shrink-0">
@@ -39,8 +48,16 @@ export function InventoryDetail({ card }: { card: Card }) {
             {card.description}
           </p>
         </div>
-        <div className="sm:ml-auto">
-          <ButtonComponent>Filtro rápido</ButtonComponent>
+        <div className="sm:ml-auto flex items-center gap-2">
+          <select
+            value={pieceFilter}
+            onChange={(e) => setPieceFilter(e.target.value as any)}
+            className="text-xs p-2 rounded-xl border border-border bg-background text-text focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option value="todos">Filtro rápido: Todos</option>
+            <option value="disponibles">Solo Disponibles</option>
+            <option value="vendidos">Solo Vendidos</option>
+          </select>
         </div>
       </div>
 
@@ -86,10 +103,17 @@ export function InventoryDetail({ card }: { card: Card }) {
       </article>
 
       <div className="p-4">
-        <h3 className="text-lg font-semibold mb-3">Piezas</h3>
-        {card.pieces && card.pieces.length > 0 ? (
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="text-lg font-semibold">Piezas</h3>
+          {pieceFilter !== "todos" && (
+            <span className="text-xs text-text/60">
+              Mostrando {filteredPieces?.length} de {card.pieces?.length || 0}
+            </span>
+          )}
+        </div>
+        {filteredPieces && filteredPieces.length > 0 ? (
           <ul className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-            {card.pieces.map((piece) => (
+            {filteredPieces.map((piece) => (
               <li
                 key={piece._id}
                 className="relative p-3 border border-border rounded-md flex flex-col gap-1 bg-background"
@@ -120,7 +144,7 @@ export function InventoryDetail({ card }: { card: Card }) {
           </ul>
         ) : (
           <p className="text-xs text-text/50 font-mono italic">
-            No hay piezas individuales registradas en este elemento.
+            No hay piezas registradas o que coincidan con el filtro actual.
           </p>
         )}
       </div>

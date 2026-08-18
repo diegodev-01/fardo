@@ -133,11 +133,19 @@ const OrdersForm = () => {
   const handleFormSubmit = async (data: SaleSchemaType) => {
     console.log("Datos a guardar:", data);
     try {
-      // Aquí ejecutas el Server Action para guardar la venta/orden:
-      // await createSaleAction(data);
-      // router.push("/admin/orders");
+      setIsLoading(true);
+      const { createSaleAction } = await import("@/lib/actions/sale.action");
+      const result = await createSaleAction(data);
+      if (result.success) {
+        router.push("/admin/orders");
+        router.refresh();
+      } else {
+        alert(result.error);
+      }
     } catch (error) {
       console.error("Error al guardar la orden:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 

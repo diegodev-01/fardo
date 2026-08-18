@@ -28,3 +28,32 @@ export async function getGarmentsAction() {
     return { success: false, error: message };
   }
 }
+
+export async function softDeleteGarmentAction(id: string) {
+  try {
+    const { connectDB } = await import("../db");
+    await connectDB();
+    const updatedGarment = await garmentModel.findByIdAndUpdate(
+      id,
+      { deletedAt: new Date() },
+      { new: true }
+    );
+
+    if (!updatedGarment) {
+      return { success: false, error: "Prenda no encontrada" };
+    }
+
+    const { revalidatePath } = await import("next/cache");
+    revalidatePath("/admin/inventory");
+
+    return {
+      success: true,
+      data: JSON.parse(JSON.stringify(updatedGarment)),
+    };
+  } catch (error) {
+    console.error("Error en softDeleteGarmentAction:", error);
+    const message =
+      error instanceof Error ? error.message : "Error al eliminar prenda";
+    return { success: false, error: message };
+  }
+}

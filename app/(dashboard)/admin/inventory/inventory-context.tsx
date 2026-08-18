@@ -20,6 +20,9 @@ interface InventoryContextValue {
   showListMobile: boolean;
   setShowListMobile: (value: boolean) => void;
   refresh: () => Promise<void>;
+  page: number;
+  setPage: (p: number) => void;
+  totalPages: number;
 }
 
 const InventoryContext = createContext<InventoryContextValue | null>(null);
@@ -31,18 +34,22 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const [bales, setBales] = useState<Card[]>([]);
   const [garmentCard, setGarmentCard] = useState<Card>();
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [showListMobile, setShowListMobile] = useState(true);
 
-  const fetchData = async () => {
+  const fetchData = async (currentPage = page) => {
     try {
       setLoading(true);
       const [pieceRes, balesRes, garmentsRes] = await Promise.all([
         getpieceTypes(),
-        getBales(1, 10),
+        getBales(currentPage, 10),
         getGarments(1, 10),
       ]);
 
       setPieceOptions(pieceRes);
+
+      setTotalPages(balesRes.info?.totalPages || 1);
 
       const formattedBales = (balesRes.data || []).map((bale: IBale) => ({
         ...bale,
@@ -87,13 +94,14 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         setLoading(true);
         const [pieceRes, balesRes, garmentsRes] = await Promise.all([
           getpieceTypes(),
-          getBales(1, 10),
+          getBales(page, 10),
           getGarments(1, 10),
         ]);
 
         if (cancelled) return;
 
         setPieceOptions(pieceRes);
+        setTotalPages(balesRes.info?.totalPages || 1);
 
         const formattedBales = (balesRes.data || []).map((bale: IBale) => ({
           ...bale,
@@ -137,7 +145,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [page]);
   const total = bales.length + (garmentCard ? 1 : 0);
   const actives =
     bales.filter((b) => b.state === "DISPONIBLE").length +
@@ -161,6 +169,9 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         showListMobile,
         setShowListMobile,
         refresh: fetchData,
+        page,
+        setPage,
+        totalPages,
       }}
     >
       {children}

@@ -4,24 +4,44 @@ import customerModel from "../models/customer.model";
 import { Customer } from "../schemas/customer";
 import saleModel from "../models/sale.model";
 
+import garmentModel from "../models/garment.model";
+
 export const getOrders = async () => {
   try {
     await connectDB();
     const orders = await saleModel.find({}).lean();
 
-    return orders.map((sale) => ({
-      ...sale,
-      _id: sale._id.toString(),
-      createdAt: sale.createdAt
-        ? new Date(sale.createdAt).toISOString()
-        : undefined,
-      updatedAt: sale.updatedAt
-        ? new Date(sale.updatedAt).toISOString()
-        : undefined,
-    }));
+    const populatedOrders = await Promise.all(
+      orders.map(async (sale) => {
+        const customer = await customerModel.findById(sale.customerId).lean();
+        const garment = await garmentModel.findById(sale.garmentId).lean();
+        
+        return {
+          ...sale,
+          _id: sale._id.toString(),
+          customer: {
+            name: customer?.name || "Desconocido",
+            lastname: customer?.lastname || "",
+            phone: customer?.phone || "",
+          },
+          garment: {
+            name: garment?.name || "Prenda eliminada",
+            finalPrice: sale.price || 0,
+          },
+          createdAt: sale.createdAt
+            ? new Date(sale.createdAt).toISOString()
+            : undefined,
+          updatedAt: sale.updatedAt
+            ? new Date(sale.updatedAt).toISOString()
+            : undefined,
+        };
+      })
+    );
+
+    return populatedOrders.reverse();
   } catch (error) {
     console.error("Error fetching sales:", error);
-    throw new Error("Error al obtener los clientes");
+    throw new Error("Error al obtener los pedidos");
   }
 };
 

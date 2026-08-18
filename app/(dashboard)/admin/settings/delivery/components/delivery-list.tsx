@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { IDelivery } from "@/lib/models/delivery.model";
-import { MapPin, Phone, User, Package, Filter } from "lucide-react";
+import { softDeleteDeliveryAction } from "@/lib/actions/delivery.action";
+import { Loader2, MapPin, Phone, User, Package, Filter, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function DeliveryList({
   deliveries,
@@ -10,6 +12,8 @@ export default function DeliveryList({
   deliveries: IDelivery[];
 }) {
   const [filter, setFilter] = useState<string>("todos");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const router = useRouter();
 
   const filteredDeliveries =
     filter === "todos"
@@ -27,6 +31,18 @@ export default function DeliveryList({
       default:
         return "bg-primary/10 text-primary border-primary/20";
     }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("¿Seguro que deseas eliminar este método de entrega?")) return;
+    setDeletingId(id);
+    const res = await softDeleteDeliveryAction(id);
+    if (res.success) {
+      router.refresh();
+    } else {
+      alert(res.error || "Error al eliminar");
+    }
+    setDeletingId(null);
   };
 
   return (
@@ -60,7 +76,7 @@ export default function DeliveryList({
           {filteredDeliveries.map((delivery) => (
             <div
               key={delivery._id}
-              className={`bg-background border rounded-xl p-4 flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow ${
+              className={`bg-background border rounded-xl p-4 flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow relative ${
                 delivery.deliveryMethod === "casillero"
                   ? "border-amber-500/30"
                   : delivery.deliveryMethod === "punto fijo"
@@ -70,8 +86,8 @@ export default function DeliveryList({
                   : "border-border"
               }`}
             >
-              <div className="flex justify-between items-start">
-                <h3 className="font-semibold text-text truncate pr-2 flex items-center gap-2">
+              <div className="flex justify-between items-start pr-8">
+                <h3 className="font-semibold text-text truncate flex items-center gap-2">
                   <User className="w-4 h-4 text-primary" />
                   {delivery.name}
                 </h3>
@@ -82,6 +98,21 @@ export default function DeliveryList({
                 >
                   {delivery.deliveryMethod}
                 </span>
+              </div>
+
+              <div className="absolute top-4 right-4">
+                <button
+                  onClick={() => handleDelete(delivery._id)}
+                  disabled={deletingId === delivery._id}
+                  className="text-red-500/70 hover:text-red-500 transition-colors p-1"
+                  title="Eliminar"
+                >
+                  {deletingId === delivery._id ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
+                </button>
               </div>
 
               <div className="flex flex-col gap-2 text-sm text-text/70 mt-2">
