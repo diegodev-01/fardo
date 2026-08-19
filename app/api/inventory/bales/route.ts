@@ -15,8 +15,13 @@ export const GET = withRole(
       const limit = parseInt(searchParams.get("limit") || "10", 10);
       const skip = (page - 1) * limit;
 
-      const query =
+      const baseQuery =
         session.user.role === "admin" ? {} : { salesperson: session.user.id };
+
+      const query = {
+        ...baseQuery,
+        deletedAt: null,
+      };
 
       const [bales, totalDocs] = await Promise.all([
         baleModel

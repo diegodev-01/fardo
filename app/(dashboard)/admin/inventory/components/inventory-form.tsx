@@ -6,10 +6,11 @@ import { formSchema, InventoryFormData } from "@/lib/schemas/bale";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { useInventory } from "../inventory-context";
 import { gradeOptions, sizeOptions } from "../lib/types";
 import { updateBaleAction } from "@/lib/actions/bale.action";
+import { SearchableSelect } from "@/components/ui/form/searchable-select";
 
 // Dato existente que se pasa cuando el formulario se usa para editar.
 // Ajusta este tipo si tu InventoryFormData ya cubre todos estos campos.
@@ -39,6 +40,7 @@ export interface InventoryEditData {
   garmentType?: string;
   grade?: string;
   color?: string;
+  salesPersonId?: string;
   pieceTypes?: RawPieceType[];
 }
 
@@ -90,6 +92,7 @@ export function InventoryForm({ data }: InventoryFormProps) {
       garmentType: "",
       grade: "",
       color: "",
+      salesPersonId: "",
       ...mapDataToFormValues(data, activeType),
     },
   });
@@ -119,6 +122,7 @@ export function InventoryForm({ data }: InventoryFormProps) {
       weight: "",
       sendPrice: "",
       pieceTypes: [],
+      salesPersonId: "",
       size: "",
       garmentType: "",
       grade: "",
@@ -154,6 +158,7 @@ export function InventoryForm({ data }: InventoryFormProps) {
           category: p.category || "",
         })) || [],
       size: data.size || "",
+      salesPersonId: data.salesPersonId || "",
       garmentType: data.garmentType || "",
       grade: data.grade || "",
       color: data.color || "",
@@ -245,6 +250,7 @@ export function InventoryForm({ data }: InventoryFormProps) {
               garmentType: formData.garmentType || undefined,
               grade: formData.grade || undefined,
               color: formData.color || undefined,
+              salesPersonId: formData.salesPersonId || undefined,
             }
           : formData;
 
@@ -583,6 +589,28 @@ export function InventoryForm({ data }: InventoryFormProps) {
                     </p>
                   )}
                 </div>
+                {/* <span className="flex-1">
+                  <label className="block text-xs font-medium text-text/70 mb-1">
+                    Cliente
+                  </label>
+                  <Controller
+                    name="salesPersonId"
+                    control={control}
+                    render={({ field }) => (
+                      <SearchableSelect
+                        options={customersOptions}
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder={
+                          isLoading
+                            ? "Cargando clientes..."
+                            : "Buscar o seleccionar cliente..."
+                        }
+                        error={errors.customerId?.message}
+                      />
+                    )}
+                  />
+                </span> */}
                 <div>
                   <InputComponent
                     type="color"

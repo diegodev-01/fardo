@@ -37,6 +37,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [showListMobile, setShowListMobile] = useState(true);
+  const [salesPersonId, setSalesPersonId] = useState("");
 
   const fetchData = async (currentPage = page) => {
     try {

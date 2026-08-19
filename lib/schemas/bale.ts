@@ -36,6 +36,7 @@ export const formSchema = z
     garmentType: z.string().optional(),
     grade: z.string().optional(),
     color: z.string().optional(),
+    salesPersonId: z.string().optional(),
     // Campos para Fardo
     totalQuantity: z.coerce
       .number()
