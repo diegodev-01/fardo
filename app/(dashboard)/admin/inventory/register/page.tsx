@@ -1,5 +1,5 @@
-import { InventoryForm } from "../components/inventory-form";
+import { InventoryForm } from "@/app/(dashboard)/_shared/inventory/components/inventory-form";
 
 export default function InventoryRegisterPage() {
-  return <InventoryForm />;
+  return <InventoryForm basePath="/admin/inventory" />;
 }

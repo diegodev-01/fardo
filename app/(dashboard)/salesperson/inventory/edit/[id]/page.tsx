@@ -6,7 +6,7 @@ import { InventoryForm } from "@/app/(dashboard)/_shared/inventory/components/in
 import { IBale } from "@/types/inventory";
 import { getBaleByIdAction } from "@/lib/actions/bale.action";
 
-export default function BaleEditPage() {
+export default function SalespersonBaleEditPage() {
   const [baleData, setBaleData] = useState<IBale | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -68,7 +68,8 @@ export default function BaleEditPage() {
   return (
     <InventoryForm
       data={{ ...baleData, type: "bale" }}
-      basePath="/admin/inventory"
+      basePath="/salesperson/inventory"
+      hideSalespersonField={true}
     />
   );
 }
