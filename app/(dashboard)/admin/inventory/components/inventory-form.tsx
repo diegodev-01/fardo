@@ -10,7 +10,10 @@ import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { useInventory } from "../inventory-context";
 import { gradeOptions, sizeOptions } from "../lib/types";
 import { updateBaleAction } from "@/lib/actions/bale.action";
-import { SearchableSelect } from "@/components/ui/form/searchable-select";
+import { SearchableSelect, SelectOption } from "@/components/ui/form/searchable-select";
+import { useState } from "react";
+import { getSalespersonsAction } from "@/lib/actions/user.actions";
+import { IUser } from "@/lib/models/user.model";
 
 // Dato existente que se pasa cuando el formulario se usa para editar.
 // Ajusta este tipo si tu InventoryFormData ya cubre todos estos campos.
@@ -58,6 +61,36 @@ export function InventoryForm({ data }: InventoryFormProps) {
     : (searchParams.get("type") as "bale" | "garment") || "bale";
 
   const { bales, pieceOptions, refresh, setShowListMobile } = useInventory();
+
+  const [salespersonsOptions, setSalespersonsOptions] = useState<SelectOption[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const fetchSalespersons = async () => {
+      try {
+        setIsLoading(true);
+        const usersData = await getSalespersonsAction();
+        if (usersData && Array.isArray(usersData.data)) {
+          const mappedUsers: SelectOption[] = usersData.data
+            .filter(
+              (u: IUser): u is IUser & { _id: string } =>
+                typeof u._id === "string" && u._id.length > 0,
+            )
+            .map((u: IUser) => ({
+              value: u._id as string,
+              label: `${u.name}`,
+              searchTerms: `${u.name} ${u.phone || ""}`,
+            }));
+          setSalespersonsOptions(mappedUsers);
+        }
+      } catch (error) {
+        console.error("Error al cargar vendedores:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchSalespersons();
+  }, []);
 
   const {
     register,
@@ -589,28 +622,28 @@ export function InventoryForm({ data }: InventoryFormProps) {
                     </p>
                   )}
                 </div>
-                {/* <span className="flex-1">
+                <span className="flex-1">
                   <label className="block text-xs font-medium text-text/70 mb-1">
-                    Cliente
+                    Vendedor
                   </label>
                   <Controller
                     name="salesPersonId"
                     control={control}
                     render={({ field }) => (
                       <SearchableSelect
-                        options={customersOptions}
+                        options={salespersonsOptions}
                         value={field.value}
                         onChange={field.onChange}
                         placeholder={
                           isLoading
-                            ? "Cargando clientes..."
-                            : "Buscar o seleccionar cliente..."
+                            ? "Cargando vendedores..."
+                            : "Buscar o seleccionar vendedor..."
                         }
-                        error={errors.customerId?.message}
+                        error={errors.salesPersonId?.message}
                       />
                     )}
                   />
-                </span> */}
+                </span>
                 <div>
                   <InputComponent
                     type="color"

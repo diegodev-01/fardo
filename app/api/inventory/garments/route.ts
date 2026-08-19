@@ -84,6 +84,7 @@ export const POST = withRole(["admin", "salesperson"], async (req, session) => {
     description,
     state,
     color,
+    salesPersonId,
   } = await req.json();
 
   if (!name || typeof quantity !== "number") {
@@ -102,7 +103,7 @@ export const POST = withRole(["admin", "salesperson"], async (req, session) => {
     description,
     state,
     color,
-    salesperson: session.user.id,
+    salesperson: salesPersonId || session.user.id,
   };
 
   if (baleId) {

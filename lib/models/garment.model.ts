@@ -14,6 +14,7 @@ export interface IGarment {
     description?: string;
     color?: string;
     imageUrl?: string;
+    salesperson?: string;
     createdAt: Date;
     updatedAt: Date;
     deletedAt?: Date;
@@ -37,6 +38,7 @@ const GarmentSchema = new Schema<IGarment>(
         description: { type: String, required: false },
         color: { type: String, required: false },
         imageUrl: { type: String },
+        salesperson: { type: Schema.Types.ObjectId, ref: "User", required: false },
 
         createdAt: { type: Date, default: Date.now },
         updatedAt: { type: Date, default: Date.now },
