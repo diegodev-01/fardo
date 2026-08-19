@@ -3,14 +3,23 @@
 import { connectDB } from "@/lib/db";
 import userModel from "@/lib/models/user.model";
 
+export interface SalespersonSummary {
+  _id: string;
+  name: string;
+  phone?: string;
+  role: string;
+}
+
 export async function getSalespersonsAction() {
   try {
     await connectDB();
-    const salespersons = await userModel.find({ role: "salesperson" }).lean();
-    
-    // Serialization for Client Components
-    const serialized = salespersons.map((user: any) => ({
-      _id: user._id.toString(),
+    const salespersons = await userModel
+      .find({ role: "salesperson" })
+      .select("_id name phone role")
+      .lean();
+
+    const serialized: SalespersonSummary[] = salespersons.map((user) => ({
+      _id: String(user._id),
       name: user.name,
       phone: user.phone,
       role: user.role,

@@ -10,7 +10,10 @@ import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { useInventory } from "../inventory-context";
 import { gradeOptions, sizeOptions } from "../lib/types";
 import { updateBaleAction } from "@/lib/actions/bale.action";
-import { SearchableSelect, SelectOption } from "@/components/ui/form/searchable-select";
+import {
+  SearchableSelect,
+  SelectOption,
+} from "@/components/ui/form/searchable-select";
 import { useState } from "react";
 import { getSalespersonsAction } from "@/lib/actions/user.actions";
 import { IUser } from "@/lib/models/user.model";
@@ -51,6 +54,13 @@ interface InventoryFormProps {
   data?: InventoryEditData;
 }
 
+type SalespersonSummary = {
+  _id: string;
+  name: string;
+  phone?: string;
+  role: string;
+};
+
 export function InventoryForm({ data }: InventoryFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -62,7 +72,9 @@ export function InventoryForm({ data }: InventoryFormProps) {
 
   const { bales, pieceOptions, refresh, setShowListMobile } = useInventory();
 
-  const [salespersonsOptions, setSalespersonsOptions] = useState<SelectOption[]>([]);
+  const [salespersonsOptions, setSalespersonsOptions] = useState<
+    SelectOption[]
+  >([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -72,13 +84,12 @@ export function InventoryForm({ data }: InventoryFormProps) {
         const usersData = await getSalespersonsAction();
         if (usersData && Array.isArray(usersData.data)) {
           const mappedUsers: SelectOption[] = usersData.data
-            .filter(
-              (u: IUser): u is IUser & { _id: string } =>
-                typeof u._id === "string" && u._id.length > 0,
+            .filter((u): u is SalespersonSummary & { _id: string } =>
+              Boolean(u._id),
             )
-            .map((u: IUser) => ({
-              value: u._id as string,
-              label: `${u.name}`,
+            .map((u) => ({
+              value: u._id,
+              label: u.name,
               searchTerms: `${u.name} ${u.phone || ""}`,
             }));
           setSalespersonsOptions(mappedUsers);
@@ -632,7 +643,7 @@ export function InventoryForm({ data }: InventoryFormProps) {
                     render={({ field }) => (
                       <SearchableSelect
                         options={salespersonsOptions}
-                        value={field.value}
+                        value={field.value ?? ""}
                         onChange={field.onChange}
                         placeholder={
                           isLoading

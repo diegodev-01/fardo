@@ -7,7 +7,10 @@ export default async function SalespersonLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
-  if (session?.user?.role !== "salesperson") redirect("/dashboard");
+  if (session?.user?.role !== "salesperson") {
+    console.log(session)
+    redirect("/dashboard")
+  };
 
   return <>{children}</>;
 }

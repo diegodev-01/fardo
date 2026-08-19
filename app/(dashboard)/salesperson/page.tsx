@@ -1,7 +1,5 @@
-export default function SalespersonPage() {
-  return (
-    <div>
-      <h1>Panel de Vendedor</h1>
-    </div>
-  );
+import { redirect } from "next/navigation";
+
+export default function AdminPage() {
+  redirect("/salesperson/inventory");
 }
