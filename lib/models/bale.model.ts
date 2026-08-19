@@ -1,21 +1,5 @@
+import { IBale } from "@/types/inventory";
 import { model, models, Schema } from "mongoose";
-
-export interface IBale {
-  _id: string;
-  name: string;
-  weight: number;
-  price: number;
-  sendPrice: number;
-  totalQuantity: number;
-  currentPieces: number;
-  description: string;
-  income: number;
-  state: "ABIERTO" | "DISPONIBLE" | "VENDIDO";
-  pieceTypes: { type: string; quantity: number }[];
-  createdAt: Date;
-  updatedAt: Date | null;
-  deletedAt?: Date | null;
-}
 
 const BaleSchema = new Schema<IBale>(
   {
@@ -33,8 +17,8 @@ const BaleSchema = new Schema<IBale>(
     },
     state: {
       type: String,
-      enum: ["ABIERTO", "DISPONIBLE", "VENDIDO"],
-      default: "ABIERTO",
+      enum: ["DISPONIBLE", "DEFECTUOSO", "RESERVADO", "VENDIDO"],
+      default: "DISPONIBLE",
     },
     pieceTypes: [
       {
@@ -44,6 +28,18 @@ const BaleSchema = new Schema<IBale>(
         },
         quantity: {
           type: Number,
+          required: true,
+        },
+        MinPiecePrice: {
+          type: Number,
+          required: true,
+        },
+        MaxPiecePrice: {
+          type: Number,
+          required: false,
+        },
+        category: {
+          type: String,
           required: true,
         },
       },

@@ -18,6 +18,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import CustomerForm from "../../customers/components/customer-form";
+import { IGarment } from "@/lib/models/garment.model";
+import { IDelivery } from "@/lib/models/delivery.model";
 
 const paymentStates = [
   { value: "PENDIENTE", label: "Pendiente" },
@@ -70,19 +72,22 @@ const OrdersForm = () => {
 
         // Transformar clientes a SelectOption
         if (customersData && Array.isArray(customersData.data)) {
-          const mappedCustomers: SelectOption[] = customersData.data.map(
-            (c: any) => ({
+          const mappedCustomers: SelectOption[] = customersData.data
+            .filter(
+              (c: ICustomer): c is ICustomer & { _id: string } =>
+                typeof c._id === "string" && c._id.length > 0,
+            )
+            .map((c) => ({
               value: c._id,
               label: `${c.name} ${c.lastname}`,
               searchTerms: `${c.name} ${c.lastname} ${c.phone || ""}`,
-            }),
-          );
+            }));
           setCustomersOptions(mappedCustomers);
         }
 
         if (garmentsData.data) {
           setGarmentsOptions(
-            garmentsData.data.map((g: any) => ({
+            garmentsData.data.map((g: IGarment) => ({
               value: g._id,
               label: g.name,
               searchTerms: `${g.name} ${g.code || ""}`,
@@ -92,7 +97,7 @@ const OrdersForm = () => {
 
         if (deliveriesData.data) {
           setDeliveriesOptions(
-            deliveriesData.data.map((d: any) => ({
+            deliveriesData.data.map((d: IDelivery) => ({
               value: d._id,
               label: d.name,
               searchTerms: d.name,

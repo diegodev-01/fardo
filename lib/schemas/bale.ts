@@ -1,10 +1,25 @@
 import { z } from "zod";
 
-const pieceTypeSchema = z.object({
-  type: z.string().min(1, "Selecciona un tipo"),
-  quantity: z.coerce.number().int().min(1, "Mínimo 1"),
-});
-
+const pieceTypeSchema = z
+  .object({
+    type: z.string().min(1, "Selecciona un tipo"),
+    quantity: z.coerce.number().int().min(1, "Mínimo 1"),
+    MinPiecePrice: z.string().min(1, "El precio mínimo es requerido"),
+    MaxPiecePrice: z.string().optional(),
+    category: z.string().min(1, "Selecciona una categoría"),
+  })
+  .refine(
+    (data) => {
+      if (!data.MaxPiecePrice) return true;
+      const min = Number(data.MinPiecePrice);
+      const max = Number(data.MaxPiecePrice);
+      return isNaN(min) || isNaN(max) || max >= min;
+    },
+    {
+      message: "El precio máximo no puede ser menor al mínimo",
+      path: ["MaxPiecePrice"],
+    },
+  );
 export const formSchema = z
   .object({
     type: z.enum(["bale", "garment"]).default("bale"),
@@ -22,7 +37,11 @@ export const formSchema = z
     grade: z.string().optional(),
     color: z.string().optional(),
     // Campos para Fardo
-    totalQuantity: z.coerce.number().int().min(1, "El total de piezas es requerido").optional(),
+    totalQuantity: z.coerce
+      .number()
+      .int()
+      .min(1, "El total de piezas es requerido")
+      .optional(),
     weight: z.string().optional(),
     sendPrice: z.string().optional(),
     pieceTypes: z.array(pieceTypeSchema).default([]),

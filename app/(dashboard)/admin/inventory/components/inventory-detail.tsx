@@ -1,8 +1,7 @@
 "use client";
 
-import React from "react";
-import { ButtonComponent } from "@/components/ui/button-component";
 import { calculateClassificationProgress } from "@/lib/utils/calculate";
+import React from "react";
 import { useInventory } from "../inventory-context";
 import { Card } from "../lib/types";
 
@@ -10,7 +9,9 @@ export function InventoryDetail({ card }: { card: Card }) {
   const { setShowListMobile } = useInventory();
   const clasificated = calculateClassificationProgress(card);
 
-  const [pieceFilter, setPieceFilter] = React.useState<"todos" | "disponibles" | "vendidos">("todos");
+  const [pieceFilter, setPieceFilter] = React.useState<
+    "todos" | "disponibles" | "vendidos"
+  >("todos");
 
   const filteredPieces = card.pieces?.filter((piece) => {
     if (pieceFilter === "todos") return true;
@@ -51,7 +52,11 @@ export function InventoryDetail({ card }: { card: Card }) {
         <div className="sm:ml-auto flex items-center gap-2">
           <select
             value={pieceFilter}
-            onChange={(e) => setPieceFilter(e.target.value as any)}
+            onChange={(e) =>
+              setPieceFilter(
+                e.target.value as "todos" | "disponibles" | "vendidos",
+              )
+            }
             className="text-xs p-2 rounded-xl border border-border bg-background text-text focus:outline-none focus:ring-1 focus:ring-primary"
           >
             <option value="todos">Filtro rápido: Todos</option>
@@ -112,7 +117,7 @@ export function InventoryDetail({ card }: { card: Card }) {
           )}
         </div>
         {filteredPieces && filteredPieces.length > 0 ? (
-          <ul className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+          <ul className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-3">
             {filteredPieces.map((piece) => (
               <li
                 key={piece._id}

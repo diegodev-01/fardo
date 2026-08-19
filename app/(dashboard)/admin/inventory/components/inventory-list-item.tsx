@@ -11,8 +11,6 @@ export const GarmentListItem = React.memo(
     garmentCard,
     isSelected,
     onSelect,
-    onDelete,
-    onEdit,
   }: {
     garmentCard: Card | undefined;
     isSelected: boolean;
@@ -20,8 +18,6 @@ export const GarmentListItem = React.memo(
     onDelete?: (id: string) => void;
     onEdit?: (id: string) => void;
   }) => {
-    const [isDeleting, setIsDeleting] = useState(false);
-
     if (!garmentCard) return null;
     return (
       <li className="pb-5 mb-5 border-b border-border rounded-md relative group">
@@ -29,7 +25,7 @@ export const GarmentListItem = React.memo(
           onClick={() => onSelect(garmentCard)}
           isSelected={isSelected}
         >
-          <div className="flex justify-between items-start pr-12">
+          <div className="flex justify-between items-start">
             <h3 className="font-mono text-sm">
               {garmentCard.name || "Prendas individuales"}
             </h3>
@@ -40,10 +36,12 @@ export const GarmentListItem = React.memo(
                   : "bg-red-500/10 text-red-600 border-red-500/20"
               }`}
             >
-              {(garmentCard.totalQuantity ?? 0) > 0 ? "Disponible" : "Sin piezas"}
+              {(garmentCard.totalQuantity ?? 0) > 0
+                ? "Disponible"
+                : "Sin piezas"}
             </p>
           </div>
-          
+
           <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             {/* Ocultamos los botones de editar y eliminar para el "garmentCard" que es un agrupador general 
                 A menos que el usuario realmente quiera eliminar todas las prendas sueltas, lo cual es peligroso.
@@ -112,7 +110,7 @@ export const BaleListItem = React.memo(
   }) => {
     const [isDeleting, setIsDeleting] = useState(false);
     const pct = calculatePercentage(card.currentPieces, card.totalQuantity);
-    
+
     const handleDelete = (e: React.MouseEvent) => {
       e.stopPropagation();
       if (onDelete && card._id) {
@@ -129,9 +127,12 @@ export const BaleListItem = React.memo(
     };
 
     return (
-      <li className="cursor-pointer relative group" onClick={() => onSelect(card)}>
+      <li
+        className="cursor-pointer relative group"
+        onClick={() => onSelect(card)}
+      >
         <CardComponent isSelected={isSelected}>
-          <div className="flex justify-between items-start pr-12">
+          <div className="flex justify-between items-start">
             <h3 className="font-mono text-sm">{card.name}</h3>
             <p
               className={`p-1 px-2 text-[10px] border rounded-xl ${
@@ -168,7 +169,9 @@ export const BaleListItem = React.memo(
             </button>
           </div>
 
-          <p className="font-mono text-xs text-text/70 mt-1">{card.description}</p>
+          <p className="font-mono text-xs text-text/70 mt-1">
+            {card.description}
+          </p>
           <div className="flex flex-wrap justify-between items-center gap-y-1 mt-2">
             <span className="font-mono text-sm">
               <h5 className="text-[10px] font-medium text-text/50">Precio:</h5>

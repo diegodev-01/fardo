@@ -1,16 +1,30 @@
-export type BaleState = "ABIERTO" | "A LA VENTA" | "VENDIDO";
-export type GarmentState = "DISPONIBLE" | "DEFECTUOSO" | "RESERVADO" | "VENDIDO";
+export type BaleState = "A LA VENTA" | "VENDIDO";
+export type GarmentState =
+  | "DISPONIBLE"
+  | "DEFECTUOSO"
+  | "RESERVADO"
+  | "VENDIDO";
 
 export interface IBale {
-  _id?: string;
+  _id: string;
   name: string;
   weight: number;
   price: number;
   sendPrice: number;
   totalQuantity: number;
-  state: BaleState;
-  createdAt?: Date;
-  updatedAt?: Date;
+  currentPieces: number;
+  description: string;
+  income: number;
+  state: "DISPONIBLE" | "DEFECTUOSO" | "RESERVADO" | "VENDIDO";
+  pieceTypes: {
+    type: string;
+    quantity: number;
+    MinPiecePrice: number;
+    MaxPiecePrice?: number;
+    category: string;
+  }[];
+  createdAt: Date;
+  updatedAt: Date | null;
   deletedAt?: Date | null;
 }
 

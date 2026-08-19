@@ -1,19 +1,60 @@
 "use client";
 
-import React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useForm, useFieldArray } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { ButtonComponent } from "@/components/ui/button-component";
 import { InputComponent } from "@/components/ui/form/input-component";
 import { formSchema, InventoryFormData } from "@/lib/schemas/bale";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
 import { useInventory } from "../inventory-context";
 import { gradeOptions, sizeOptions } from "../lib/types";
+import { updateBaleAction } from "@/lib/actions/bale.action";
 
-export function InventoryForm() {
+// Dato existente que se pasa cuando el formulario se usa para editar.
+// Ajusta este tipo si tu InventoryFormData ya cubre todos estos campos.
+interface RawPieceType {
+  type: string;
+  quantity: number;
+  MinPiecePrice: number;
+  MaxPiecePrice?: number;
+  category: string;
+}
+
+export interface InventoryEditData {
+  _id: string;
+  type: "bale" | "garment";
+  name: string;
+  description?: string;
+  price: number;
+  weight?: number;
+  sendPrice?: number;
+  totalQuantity?: number;
+  currentPieces?: number;
+  income?: number;
+  state?: "DISPONIBLE" | "DEFECTUOSO" | "RESERVADO" | "VENDIDO";
+  quantity?: number;
+  baleId?: string;
+  size?: string;
+  garmentType?: string;
+  grade?: string;
+  color?: string;
+  pieceTypes?: RawPieceType[];
+}
+
+interface InventoryFormProps {
+  data?: InventoryEditData;
+}
+
+export function InventoryForm({ data }: InventoryFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const activeType = (searchParams.get("type") as "bale" | "garment") || "bale";
+  const isEditMode = Boolean(data);
+
+  const activeType: "bale" | "garment" = isEditMode
+    ? (data?.type as "bale" | "garment") || "bale"
+    : (searchParams.get("type") as "bale" | "garment") || "bale";
+
   const { bales, pieceOptions, refresh, setShowListMobile } = useInventory();
 
   const {
@@ -36,11 +77,20 @@ export function InventoryForm() {
       baleId: "",
       weight: "",
       sendPrice: "",
-      pieceTypes: [],
+      pieceTypes: [
+        {
+          type: "",
+          quantity: 1,
+          MinPiecePrice: "",
+          MaxPiecePrice: "",
+          category: "",
+        },
+      ],
       size: "",
       garmentType: "",
       grade: "",
       color: "",
+      ...mapDataToFormValues(data, activeType),
     },
   });
 
@@ -49,7 +99,14 @@ export function InventoryForm() {
     name: "pieceTypes",
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
+    if (!isEditMode || !data) return;
+    reset(mapDataToFormValues(data, activeType));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, isEditMode]);
+
+  useEffect(() => {
+    if (isEditMode) return;
     reset({
       type: activeType,
       name: "",
@@ -65,8 +122,43 @@ export function InventoryForm() {
       size: "",
       garmentType: "",
       grade: "",
+      color: "",
     });
-  }, [activeType, reset]);
+  }, [activeType, reset, isEditMode]);
+
+  function mapDataToFormValues(
+    data: InventoryEditData | undefined,
+    activeType: "bale" | "garment",
+  ): Partial<InventoryFormData> {
+    if (!data) return { type: activeType };
+
+    return {
+      type: data.type,
+      name: data.name || "",
+      description: data.description || "",
+      price: data.price !== undefined ? String(data.price) : "",
+      state: data.state,
+      quantity: data.quantity || 1,
+      totalQuantity: data.totalQuantity,
+      baleId: data.baleId || "",
+      weight: data.weight !== undefined ? String(data.weight) : "",
+      sendPrice: data.sendPrice !== undefined ? String(data.sendPrice) : "",
+      pieceTypes:
+        data.pieceTypes?.map((p) => ({
+          type: p.type,
+          quantity: p.quantity,
+          MinPiecePrice:
+            p.MinPiecePrice !== undefined ? String(p.MinPiecePrice) : "",
+          MaxPiecePrice:
+            p.MaxPiecePrice !== undefined ? String(p.MaxPiecePrice) : "",
+          category: p.category || "",
+        })) || [],
+      size: data.size || "",
+      garmentType: data.garmentType || "",
+      grade: data.grade || "",
+      color: data.color || "",
+    };
+  }
 
   const watchPieceTypes = watch("pieceTypes") || [];
   const watchTotalQuantity = watch("totalQuantity") || 0;
@@ -78,52 +170,105 @@ export function InventoryForm() {
   const targetTotal = Number(watchTotalQuantity) || 0;
 
   const handleSwitchType = (newType: "bale" | "garment") => {
+    if (isEditMode) return;
     router.push(`/admin/inventory/register?type=${newType}`);
   };
 
   const handleAddPieceType = (selectedType: string) => {
     if (!selectedType) return;
     if (watchPieceTypes.some((p) => p.type === selectedType)) return;
-    append({ type: selectedType, quantity: 1 });
+    append({
+      type: selectedType,
+      quantity: 1,
+      MinPiecePrice: "",
+      MaxPiecePrice: "",
+      category: "",
+    });
   };
 
-  const handleFormSubmit = async (data: InventoryFormData) => {
+  const handleFormSubmit = async (formData: InventoryFormData) => {
     try {
-      const endpoint =
+      // Edición de FARDO -> usa el server action directamente
+      if (isEditMode && activeType === "bale") {
+        const result = await updateBaleAction(data!._id, {
+          name: formData.name,
+          description: formData.description,
+          price: Number(formData.price) || 0,
+          weight: formData.weight ? Number(formData.weight) : undefined,
+          sendPrice: formData.sendPrice
+            ? Number(formData.sendPrice)
+            : undefined,
+          totalQuantity: formData.totalQuantity,
+          state: formData.state,
+          pieceTypes: formData.pieceTypes?.map((p) => ({
+            type: p.type,
+            quantity: Number(p.quantity) || 0,
+            MinPiecePrice: Number(p.MinPiecePrice) || 0,
+            MaxPiecePrice: p.MaxPiecePrice
+              ? Number(p.MaxPiecePrice)
+              : undefined,
+            category: p.category,
+          })),
+        });
+
+        if (!result.success) {
+          alert(result.error || "Ocurrió un error al actualizar");
+          return;
+        }
+
+        await refresh();
+        router.push("/admin/inventory");
+        return;
+      }
+
+      // Registro nuevo o edición de PRENDA -> sigue vía API route
+      const baseEndpoint =
         activeType === "garment"
           ? "/api/inventory/garments"
           : "/api/inventory/bales";
 
+      const endpoint = isEditMode
+        ? `${baseEndpoint}/${data!._id}`
+        : baseEndpoint;
+      const method = isEditMode ? "PUT" : "POST";
+
       const payload =
         activeType === "garment"
           ? {
-              name: data.name,
-              description: data.description,
-              price: Number(data.price) || 0,
-              state: data.state,
-              quantity: Number(data.quantity) || 1,
-              baleId: data.baleId || undefined,
-              size: data.size || undefined,
-              garmentType: data.garmentType || undefined,
-              grade: data.grade || undefined,
-              color: data.color || undefined,
+              name: formData.name,
+              description: formData.description,
+              price: Number(formData.price) || 0,
+              state: formData.state,
+              quantity: Number(formData.quantity) || 1,
+              baleId: formData.baleId || undefined,
+              size: formData.size || undefined,
+              garmentType: formData.garmentType || undefined,
+              grade: formData.grade || undefined,
+              color: formData.color || undefined,
             }
-          : data;
+          : formData;
 
       const response = await fetch(endpoint, {
-        method: "POST",
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
         const err = await response.json();
-        alert(err.error || "Ocurrió un error al registrar");
+        alert(
+          err.error ||
+            `Ocurrió un error al ${isEditMode ? "actualizar" : "registrar"}`,
+        );
         return;
       }
 
       await refresh();
-      router.push("/admin/inventory/register?type=garment");
+      router.push(
+        isEditMode
+          ? "/admin/inventory"
+          : "/admin/inventory/register?type=garment",
+      );
     } catch (error) {
       console.error("Error de red:", error);
     }
@@ -142,39 +287,43 @@ export function InventoryForm() {
           </button>
           <div>
             <h2 className="text-lg sm:text-xl font-semibold">
-              Registrar{" "}
+              {isEditMode ? "Editar" : "Registrar"}{" "}
               {activeType === "garment" ? "Prenda Individual" : "Fardo"}
             </h2>
             <p className="text-xs text-text/70 font-mono mt-1">
-              Ingresa la información inicial para el inventario
+              {isEditMode
+                ? "Actualiza la información del inventario"
+                : "Ingresa la información inicial para el inventario"}
             </p>
           </div>
         </div>
 
-        <div className="flex p-1 bg-border/30 rounded-lg gap-1 font-mono text-xs w-fit">
-          <button
-            type="button"
-            onClick={() => handleSwitchType("bale")}
-            className={`px-3 py-1.5 rounded-md transition-all ${
-              activeType === "bale"
-                ? "bg-background font-medium shadow-sm border border-border"
-                : "text-text/60 hover:text-text"
-            }`}
-          >
-            Fardo
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSwitchType("garment")}
-            className={`px-3 py-1.5 rounded-md transition-all ${
-              activeType === "garment"
-                ? "bg-background font-medium shadow-sm border border-border"
-                : "text-text/60 hover:text-text"
-            }`}
-          >
-            Prenda
-          </button>
-        </div>
+        {!isEditMode && (
+          <div className="flex p-1 bg-border/30 rounded-lg gap-1 font-mono text-xs w-fit">
+            <button
+              type="button"
+              onClick={() => handleSwitchType("bale")}
+              className={`px-3 py-1.5 rounded-md transition-all ${
+                activeType === "bale"
+                  ? "bg-background font-medium shadow-sm border border-border"
+                  : "text-text/60 hover:text-text"
+              }`}
+            >
+              Fardo
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSwitchType("garment")}
+              className={`px-3 py-1.5 rounded-md transition-all ${
+                activeType === "garment"
+                  ? "bg-background font-medium shadow-sm border border-border"
+                  : "text-text/60 hover:text-text"
+              }`}
+            >
+              Prenda
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-6">
@@ -344,6 +493,49 @@ export function InventoryForm() {
                                 `pieceTypes.${idx}.quantity` as const,
                               )}
                             />
+                            <InputComponent
+                              type="number"
+                              placeholder="Precio min pieza"
+                              {...register(
+                                `pieceTypes.${idx}.MinPiecePrice` as const,
+                              )}
+                              error={
+                                errors.pieceTypes?.[idx]?.MinPiecePrice?.message
+                              }
+                            />
+                            <InputComponent
+                              type="number"
+                              placeholder="Precio max pieza"
+                              {...register(
+                                `pieceTypes.${idx}.MaxPiecePrice` as const,
+                              )}
+                              error={
+                                errors.pieceTypes?.[idx]?.MaxPiecePrice?.message
+                              }
+                            />
+
+                            <div className="flex flex-col gap-1 w-full sm:w-1/4">
+                              <select
+                                id="category"
+                                className="w-full p-2 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
+                                {...register(
+                                  `pieceTypes.${idx}.category` as const,
+                                )}
+                              >
+                                <option value="" disabled>
+                                  Categoria
+                                </option>
+                                {gradeOptions.map((option) => (
+                                  <option
+                                    key={option.value}
+                                    value={option.value}
+                                  >
+                                    {option.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
                             <button
                               type="button"
                               onClick={() => remove(idx)}
@@ -495,7 +687,9 @@ export function InventoryForm() {
           </div>
 
           <div className="flex flex-wrap gap-3 pt-4 border-t border-border mt-6">
-            <ButtonComponent type="submit">Guardar Registro</ButtonComponent>
+            <ButtonComponent type="submit">
+              {isEditMode ? "Guardar Cambios" : "Guardar Registro"}
+            </ButtonComponent>
             <button
               type="button"
               onClick={() => router.push("/admin/inventory")}

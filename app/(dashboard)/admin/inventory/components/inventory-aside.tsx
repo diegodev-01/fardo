@@ -22,7 +22,7 @@ export function InventoryAside() {
     page,
     setPage,
     totalPages,
-    refresh
+    refresh,
   } = useInventory();
 
   // /admin/inventory/[id]  ->  segments = ["admin", "inventory", id]
@@ -56,12 +56,16 @@ export function InventoryAside() {
     router.push(`/admin/inventory/edit/${id}`);
   };
 
-  const [filter, setFilter] = React.useState<"todos" | "disponibles" | "agotados">("todos");
+  const [filter, setFilter] = React.useState<
+    "todos" | "disponibles" | "agotados"
+  >("todos");
 
-  const filteredGarment = filter === "todos" || 
-    (filter === "disponibles" && (garmentCard?.totalQuantity ?? 0) > 0) || 
-    (filter === "agotados" && (garmentCard?.totalQuantity ?? 0) === 0) 
-    ? garmentCard : undefined;
+  const filteredGarment =
+    filter === "todos" ||
+    (filter === "disponibles" && (garmentCard?.totalQuantity ?? 0) > 0) ||
+    (filter === "agotados" && (garmentCard?.totalQuantity ?? 0) === 0)
+      ? garmentCard
+      : undefined;
 
   const filteredBales = bales.filter((bale) => {
     if (filter === "todos") return true;
@@ -112,7 +116,7 @@ export function InventoryAside() {
         {["todos", "disponibles", "agotados"].map((f) => (
           <button
             key={f}
-            onClick={() => setFilter(f as any)}
+            onClick={() => setFilter(f as "todos" | "disponibles" | "agotados")}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
               filter === f
                 ? "bg-primary text-primary-foreground border-primary"
@@ -128,7 +132,9 @@ export function InventoryAside() {
         {filteredGarment && (
           <GarmentListItem
             garmentCard={filteredGarment}
-            isSelected={activeId === "garments-total" && activeType === "garment"}
+            isSelected={
+              activeId === "garments-total" && activeType === "garment"
+            }
             onSelect={handleSelectCard}
           />
         )}

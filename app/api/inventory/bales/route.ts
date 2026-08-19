@@ -55,9 +55,15 @@ export const POST = withRole(["admin", "salesperson"], async (req, session) => {
   try {
     const body = await req.json();
 
+    console.log("BODY RECIBIDO:", JSON.stringify(body.pieceTypes, null, 2));
+
     const validation = formSchema.safeParse(body);
 
     if (!validation.success) {
+      console.log(
+        "VALIDATION ERROR:",
+        JSON.stringify(validation.error.format(), null, 2),
+      );
       return NextResponse.json(
         {
           error: "Datos del formulario inválidos",
@@ -67,13 +73,22 @@ export const POST = withRole(["admin", "salesperson"], async (req, session) => {
       );
     }
 
+    console.log(
+      "PIECE TYPES VALIDADOS:",
+      JSON.stringify(validation.data.pieceTypes, null, 2),
+    );
+
     await connectDB();
 
     const newBale = await baleModel.create({
       ...validation.data,
       salesperson: session.user.id,
-      currentPieces: validation.data.totalQuantity
+      currentPieces: validation.data.totalQuantity,
     });
+    console.log(
+      "BALE CREADO (raw):",
+      JSON.stringify(newBale.pieceTypes, null, 2),
+    );
 
     return NextResponse.json(newBale, { status: 201 });
   } catch (error) {

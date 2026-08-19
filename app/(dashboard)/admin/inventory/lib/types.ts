@@ -1,5 +1,4 @@
-import { IBale } from "@/lib/models/bale.model";
-
+import { IBale } from "@/types/inventory";
 export interface Piece {
   _id: number;
   name: string;

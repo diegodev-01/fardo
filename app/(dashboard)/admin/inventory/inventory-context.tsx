@@ -6,7 +6,7 @@ import {
   getGarments,
   getpieceTypes,
 } from "@/lib/services/inventory.service";
-import { IBale } from "@/lib/models/bale.model";
+import { IBale } from "@/types/inventory";
 import { Card } from "./lib/types";
 
 interface InventoryContextValue {
