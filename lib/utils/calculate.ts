@@ -1,4 +1,4 @@
-import { Card } from "@/app/(dashboard)/admin/inventory/[[...slug]]/page";
+import { Card } from "@/app/(dashboard)/admin/inventory/lib/types";
 
 export const calculateClassificationProgress = (card: Card | null) => {
   if (!card || !card.totalQuantity || card.totalQuantity === 0) return 0;
