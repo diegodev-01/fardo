@@ -16,6 +16,8 @@ const PIECE_OPTIONS = [
   { label: "Chaleco", value: "CHALECO" },
   { label: "Calzado", value: "CALZADO" },
   { label: "Accesorio", value: "ACCESORIO" },
+  { label: "Body", value: "BODY" },
+  { label: "Blusa", value: "BLUSA" },
   { label: "Otro", value: "OTRO" },
 ];
 

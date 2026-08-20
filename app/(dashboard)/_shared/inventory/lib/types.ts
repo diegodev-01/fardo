@@ -19,14 +19,14 @@ export interface Card extends IBale {
 
 export const gradeOptions = [
   { label: "Premium", value: "PREMIUM" },
-  { label: "A", value: "A" },
-  { label: "B", value: "B" },
-  { label: "C", value: "C" },
-  { label: "D", value: "D" },
-  { label: "E", value: "E" },
+  { label: "SemiNuevo", value: "SEMINUEVO" },
+  { label: "Estandar", value: "Estandar" },
+  { label: "Con detalles", value: "CON_DETALLES" },
+  { label: "Gratis", value: "Gratis" },
 ];
 
 export const sizeOptions = [
+  { label: "Niños", value: "NINOS" },
   { label: "XS", value: "XS" },
   { label: "S", value: "S" },
   { label: "SM", value: "SM" },
