@@ -50,8 +50,7 @@ export interface InventoryEditData {
 
 interface InventoryFormProps {
   data?: InventoryEditData;
-  basePath: string; // e.g. "/admin/inventory" or "/salesperson/inventory"
-  /** Si es true, oculta el campo de selección de vendedor (útil para el rol salesperson que se asigna automáticamente) */
+  basePath: string;
   hideSalespersonField?: boolean;
 }
 
@@ -216,6 +215,15 @@ export function InventoryForm({
 
   const watchPieceTypes = watch("pieceTypes") || [];
   const watchTotalQuantity = watch("totalQuantity") || 0;
+  const watchBaleId = watch("baleId");
+
+  const availableGarmentOptions =
+    activeType === "garment" && watchBaleId
+      ? pieceOptions.filter((opt) => {
+          const selectedBale = bales.find((b) => b._id === watchBaleId);
+          return selectedBale?.pieceTypes?.some((p) => p.type === opt.value);
+        })
+      : pieceOptions;
 
   const totalAllocated = watchPieceTypes.reduce(
     (acc, item) => acc + (Number(item.quantity) || 0),
@@ -249,9 +257,7 @@ export function InventoryForm({
           description: formData.description,
           price: Number(formData.price) || 0,
           weight: formData.weight ? Number(formData.weight) : undefined,
-          sendPrice: formData.sendPrice
-            ? Number(formData.sendPrice)
-            : undefined,
+          sendPrice: Number(formData.sendPrice) || 0,
           totalQuantity: formData.totalQuantity,
           state: formData.state,
           pieceTypes: formData.pieceTypes?.map((p) => ({
@@ -275,7 +281,6 @@ export function InventoryForm({
         return;
       }
 
-      // Registro nuevo o edición de PRENDA -> vía API route
       const baseEndpoint =
         activeType === "garment"
           ? "/api/inventory/garments"
@@ -319,11 +324,7 @@ export function InventoryForm({
       }
 
       await refresh();
-      router.push(
-        isEditMode
-          ? basePath
-          : `${basePath}/register?type=garment`,
-      );
+      router.push(isEditMode ? basePath : `${basePath}/register?type=garment`);
     } catch (error) {
       console.error("Error de red:", error);
     }
@@ -515,16 +516,11 @@ export function InventoryForm({
                     <option key="select-option" value="" disabled>
                       + Seleccionar tipo para agregar...
                     </option>
-                    {pieceOptions
-                      .filter(
-                        (opt) =>
-                          !watchPieceTypes.some((p) => p.type === opt.value),
-                      )
-                      .map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
+                    {pieceOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
                   </select>
 
                   {fields.length > 0 && (
@@ -639,28 +635,28 @@ export function InventoryForm({
                   )}
                 </div>
 
-                  <span className="flex-1">
-                    <label className="block text-xs font-medium text-text/70 mb-1">
-                      Vendedor
-                    </label>
-                    <Controller
-                      name="salesPersonId"
-                      control={control}
-                      render={({ field }) => (
-                        <SearchableSelect
-                          options={salespersonsOptions}
-                          value={field.value ?? ""}
-                          onChange={field.onChange}
-                          placeholder={
-                            isLoading
-                              ? "Cargando vendedores..."
-                              : "Buscar o seleccionar vendedor..."
-                          }
-                          error={errors.salesPersonId?.message}
-                        />
-                      )}
-                    />
-                  </span>
+                <span className="flex-1">
+                  <label className="block text-xs font-medium text-text/70 mb-1">
+                    Vendedor
+                  </label>
+                  <Controller
+                    name="salesPersonId"
+                    control={control}
+                    render={({ field }) => (
+                      <SearchableSelect
+                        options={salespersonsOptions}
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                        placeholder={
+                          isLoading
+                            ? "Cargando vendedores..."
+                            : "Buscar o seleccionar vendedor..."
+                        }
+                        error={errors.salesPersonId?.message}
+                      />
+                    )}
+                  />
+                </span>
 
                 <div>
                   <InputComponent
@@ -710,9 +706,12 @@ export function InventoryForm({
                     {...register("garmentType")}
                   >
                     <option value="" disabled>
-                      Selecciona una opción...
+                      {watchBaleId && availableGarmentOptions.length === 0
+                        ? "El fardo no tiene tipos definidos"
+                        : "Selecciona una opción..."}
                     </option>
-                    {pieceOptions.map((option) => (
+
+                    {availableGarmentOptions.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
                       </option>
