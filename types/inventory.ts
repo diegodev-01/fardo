@@ -7,7 +7,7 @@ export type GarmentState =
 
 export interface IBale {
   _id: string;
-  code: string;
+  code?: string;
   name: string;
   weight: number;
   price: number;
