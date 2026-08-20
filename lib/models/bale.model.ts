@@ -3,6 +3,7 @@ import { model, models, Schema } from "mongoose";
 
 const BaleSchema = new Schema<IBale>(
   {
+    code: { type: String, required: true, unique: true },
     name: { type: String, required: true },
     weight: { type: Number, required: true },
     price: { type: Number, required: true },

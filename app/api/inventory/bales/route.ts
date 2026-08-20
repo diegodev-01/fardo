@@ -3,6 +3,7 @@ import baleModel from "@/lib/models/bale.model";
 import { withRole } from "@/lib/with-role";
 import { formSchema } from "@/lib/schemas/bale";
 import { NextResponse } from "next/server";
+import { getNextCode } from "@/lib/utils/generate-code";
 
 export const GET = withRole(
   ["admin", "salesperson", "customer"],
@@ -87,6 +88,10 @@ export const POST = withRole(["admin", "salesperson"], async (req, session) => {
 
     const newBale = await baleModel.create({
       ...validation.data,
+      code: getNextCode(
+        (await baleModel.findOne().sort({ createdAt: -1 }).select("code"))
+          ?.code,
+      ),
       salesperson: session.user.id,
       currentPieces: validation.data.totalQuantity,
     });
