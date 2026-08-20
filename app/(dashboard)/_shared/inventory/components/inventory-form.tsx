@@ -238,7 +238,7 @@ export function InventoryForm({
 
   const handleAddPieceType = (selectedType: string) => {
     if (!selectedType) return;
-    if (watchPieceTypes.some((p) => p.type === selectedType)) return;
+
     append({
       type: selectedType,
       quantity: 1,
@@ -566,25 +566,27 @@ export function InventoryForm({
                             />
 
                             <div className="flex flex-col gap-1 w-full sm:w-1/4">
-                              <select
-                                id="category"
-                                className="w-full p-2 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
-                                {...register(
-                                  `pieceTypes.${idx}.category` as const,
-                                )}
-                              >
-                                <option value="" disabled>
-                                  Categoria
-                                </option>
-                                {gradeOptions.map((option) => (
-                                  <option
-                                    key={option.value}
-                                    value={option.value}
-                                  >
-                                    {option.label}
+                              <div className="flex flex-col gap-1 w-full sm:w-1/4">
+                                <select
+                                  id={`category-${field.id}`}
+                                  className="w-full p-2 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
+                                  {...register(
+                                    `pieceTypes.${idx}.category` as const,
+                                  )}
+                                >
+                                  <option value="">
+                                    Seleccionar Categoría...
                                   </option>
-                                ))}
-                              </select>
+                                  {gradeOptions.map((option) => (
+                                    <option
+                                      key={option.value}
+                                      value={option.value}
+                                    >
+                                      {option.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
                             </div>
 
                             <button
