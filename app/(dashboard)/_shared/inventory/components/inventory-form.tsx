@@ -15,7 +15,11 @@ import {
   SelectOption,
 } from "@/components/ui/form/searchable-select";
 import { useState } from "react";
-import { getSalespersonsAction } from "@/lib/actions/user.actions";
+import {
+  AdminSummary,
+  getAdminsAction,
+  getSalespersonsAction,
+} from "@/lib/actions/user.actions";
 
 // Dato existente que se pasa cuando el formulario se usa para editar.
 interface RawPieceType {
@@ -85,12 +89,10 @@ export function InventoryForm({
     const fetchSalespersons = async () => {
       try {
         setIsLoading(true);
-        const usersData = await getSalespersonsAction();
+        const usersData = await getAdminsAction();
         if (usersData && Array.isArray(usersData.data)) {
           const mappedUsers: SelectOption[] = usersData.data
-            .filter((u): u is SalespersonSummary & { _id: string } =>
-              Boolean(u._id),
-            )
+            .filter((u): u is AdminSummary & { _id: string } => Boolean(u._id))
             .map((u) => ({
               value: u._id,
               label: u.name,
@@ -566,27 +568,25 @@ export function InventoryForm({
                             />
 
                             <div className="flex flex-col gap-1 w-full sm:w-1/4">
-                              <div className="flex flex-col gap-1 w-full sm:w-1/4">
-                                <select
-                                  id={`category-${field.id}`}
-                                  className="w-full p-2 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
-                                  {...register(
-                                    `pieceTypes.${idx}.category` as const,
-                                  )}
-                                >
-                                  <option value="">
-                                    Seleccionar Categoría...
+                              <select
+                                id={`category-${field.id}`}
+                                className="w-full p-2 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
+                                {...register(
+                                  `pieceTypes.${idx}.category` as const,
+                                )}
+                              >
+                                <option value="">
+                                  Seleccionar Categoría...
+                                </option>
+                                {gradeOptions.map((option) => (
+                                  <option
+                                    key={option.value}
+                                    value={option.value}
+                                  >
+                                    {option.label}
                                   </option>
-                                  {gradeOptions.map((option) => (
-                                    <option
-                                      key={option.value}
-                                      value={option.value}
-                                    >
-                                      {option.label}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
+                                ))}
+                              </select>
                             </div>
 
                             <button

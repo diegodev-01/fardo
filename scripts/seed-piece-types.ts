@@ -19,6 +19,7 @@ const PIECE_OPTIONS = [
   { label: "Body", value: "BODY" },
   { label: "Blusa", value: "BLUSA" },
   { label: "Otro", value: "OTRO" },
+  { label: "Corset", value: "CORSET" },
 ];
 
 async function seed() {

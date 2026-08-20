@@ -13,12 +13,18 @@ export function InventoryDetail({ card }: { card: Card }) {
     "todos" | "disponibles" | "vendidos"
   >("todos");
 
-  const filteredPieces = card.pieces?.filter((piece) => {
-    if (pieceFilter === "todos") return true;
-    if (pieceFilter === "disponibles") return piece.state === "DISPONIBLE";
-    if (pieceFilter === "vendidos") return piece.state !== "DISPONIBLE";
-    return true;
+  const piecesArray = card.pieces || card.pieceTypes || [];
+
+  const filteredPieces = piecesArray.filter((piece) => {
+    if ("state" in piece) {
+      if (pieceFilter === "disponibles") return piece.state === "DISPONIBLE";
+      if (pieceFilter === "vendidos") return piece.state !== "DISPONIBLE";
+      return true;
+    }
+
+    return pieceFilter === "todos";
   });
+  console.log(card, " y tabien ", filteredPieces);
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
@@ -112,40 +118,60 @@ export function InventoryDetail({ card }: { card: Card }) {
           <h3 className="text-lg font-semibold">Piezas</h3>
           {pieceFilter !== "todos" && (
             <span className="text-xs text-text/60">
-              Mostrando {filteredPieces?.length} de {card.pieces?.length || 0}
+              Mostrando {filteredPieces?.length} de {piecesArray.length}{" "}
             </span>
           )}
         </div>
         {filteredPieces && filteredPieces.length > 0 ? (
           <ul className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-3">
-            {filteredPieces.map((piece) => (
-              <li
-                key={piece._id}
-                className="relative p-3 border border-border rounded-md flex flex-col gap-1 bg-background"
-              >
-                <h4 className="flex flex-wrap items-center font-mono text-sm font-semibold gap-3">
-                  {piece.name}
-                  <span
-                    className={`flex items-center justify-center py-0.5 px-2 border rounded-2xl font-mono text-[10px] ${
-                      piece.state === "DISPONIBLE"
-                        ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                        : "bg-red-500/10 text-red-600 border-red-500/20"
-                    }`}
-                  >
-                    {piece.state}
+            {filteredPieces.map((piece, index) => {
+              const isPieceType = "quantity" in piece;
+              const pieceId = "_id" in piece ? piece._id : index;
+              return (
+                <li
+                  key={pieceId}
+                  className="relative p-3 border border-border rounded-md flex flex-col gap-1 bg-background"
+                >
+                  <h4 className="flex flex-wrap items-center font-mono text-sm font-semibold gap-3">
+                    {"name" in piece
+                      ? piece.name
+                      : piece.type + " - " + piece.quantity + " piezas"}
+
+                    {"state" in piece && (
+                      <span
+                        className={`flex items-center justify-center py-0.5 px-2 border rounded-2xl font-mono text-[10px] ${
+                          piece.state === "DISPONIBLE"
+                            ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                            : "bg-red-500/10 text-red-600 border-red-500/20"
+                        }`}
+                      >
+                        {piece.state}
+                      </span>
+                    )}
+                  </h4>
+
+                  <p className="font-mono text-[10px] text-text/70">
+                    Grado: {isPieceType ? piece.category : piece.grade}
+                  </p>
+
+                  <p className="font-mono text-[10px] text-text/70">
+                    {isPieceType
+                      ? `Cantidad: ${piece.quantity}`
+                      : `${piece.size} - ${piece.garmentType}`}
+                  </p>
+
+                  <span className="absolute right-3 bottom-3 font-mono text-xs font-semibold">
+                    $
+                    {"price" in piece
+                      ? piece.price
+                      : piece.MinPiecePrice +
+                        " - " +
+                        piece.MaxPiecePrice +
+                        " c/u"}
                   </span>
-                </h4>
-                <p className="font-mono text-[10px] text-text/70">
-                  Grado: {piece.grade || "N/A"}
-                </p>
-                <p className="font-mono text-[10px] text-text/70">
-                  {piece.size} - {piece.garmentType}
-                </p>
-                <span className="absolute right-3 bottom-3 font-mono text-xs font-semibold">
-                  ${piece.price}
-                </span>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         ) : (
           <p className="text-xs text-text/50 font-mono italic">
