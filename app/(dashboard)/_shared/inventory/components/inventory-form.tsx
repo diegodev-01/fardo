@@ -268,6 +268,7 @@ export function InventoryForm({
           pieceTypes: formData.pieceTypes?.map((p) => ({
             type: p.type,
             quantity: Number(p.quantity) || 0,
+            currentPieces: Number(p.quantity) || 0,
             MinPiecePrice: Number(p.MinPiecePrice) || 0,
             MaxPiecePrice: p.MaxPiecePrice
               ? Number(p.MaxPiecePrice)
