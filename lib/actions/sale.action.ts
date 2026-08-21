@@ -94,14 +94,16 @@ export async function createSaleAction(data: SaleSchemaType) {
 
             if (pieceTypeIndex !== -1) {
               const currentQty =
-                bale.pieceTypes[pieceTypeIndex].currentQuantity ?? 0;
-              if (currentQty < 1) {
+                bale.pieceTypes[pieceTypeIndex].currentPieces ?? 0;
+                console.log("el bale: ",bale.pieceTypes[pieceTypeIndex].currentPieces);
+                if (currentQty < 1) {
+                console.log("currentQty: ", currentQty);
                 throw new Error(
                   `Stock insuficiente para el tipo de prenda especificado en el fardo.`,
                 );
               }
 
-              updatePayload[`pieceTypes.${pieceTypeIndex}.currentQuantity`] =
+              updatePayload[`pieceTypes.${pieceTypeIndex}.currentPieces`] =
                 -1;
             } else {
               console.warn(
