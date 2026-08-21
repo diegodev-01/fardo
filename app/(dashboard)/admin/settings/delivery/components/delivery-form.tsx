@@ -12,7 +12,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 
-export default function DeliveryForm({ onSuccess }: { onSuccess: () => void }) {
+export default function DeliveryForm({
+  onSuccess,
+}: {
+  onSuccess?: () => void;
+}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -40,7 +44,7 @@ export default function DeliveryForm({ onSuccess }: { onSuccess: () => void }) {
 
     if (res.success) {
       router.refresh();
-      onSuccess();
+      if (onSuccess) onSuccess();
     } else {
       setError(res.error || "Ocurrió un error al crear el método de entrega");
       setLoading(false);

@@ -56,6 +56,7 @@ interface InventoryFormProps {
   data?: InventoryEditData;
   basePath: string;
   hideSalespersonField?: boolean;
+  defaultType?: "bale" | "garment";
 }
 
 type SalespersonSummary = {
@@ -69,6 +70,7 @@ export function InventoryForm({
   data,
   basePath,
   hideSalespersonField = false,
+  defaultType,
 }: InventoryFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -76,7 +78,7 @@ export function InventoryForm({
 
   const activeType: "bale" | "garment" = isEditMode
     ? (data?.type as "bale" | "garment") || "bale"
-    : (searchParams.get("type") as "bale" | "garment") || "bale";
+    : (searchParams.get("type") as "bale" | "garment") || defaultType;
 
   const { bales, pieceOptions, refresh, setShowListMobile } = useInventory();
 
@@ -201,6 +203,7 @@ export function InventoryForm({
         data.pieceTypes?.map((p) => ({
           type: p.type,
           quantity: p.quantity,
+          currentPieces: p.quantity,
           MinPiecePrice:
             p.MinPiecePrice !== undefined ? String(p.MinPiecePrice) : "",
           MaxPiecePrice:
@@ -332,57 +335,61 @@ export function InventoryForm({
     }
   };
 
+  console.log(defaultType);
+
   return (
     <div className="flex flex-col h-full">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 p-4 sm:p-6 pb-4 border-b border-border shrink-0 bg-background">
-        <div className="flex items-start gap-2">
-          <button
-            type="button"
-            onClick={() => setShowListMobile(true)}
-            className="md:hidden shrink-0 mt-0.5 text-xs font-mono text-text/60 hover:text-text px-2 py-1 border border-border rounded-md"
-          >
-            ← Volver
-          </button>
-          <div>
-            <h2 className="text-lg sm:text-xl font-semibold">
-              {isEditMode ? "Editar" : "Registrar"}{" "}
-              {activeType === "garment" ? "Prenda Individual" : "Fardo"}
-            </h2>
-            <p className="text-xs text-text/70 font-mono mt-1">
-              {isEditMode
-                ? "Actualiza la información del inventario"
-                : "Ingresa la información inicial para el inventario"}
-            </p>
+      {!defaultType && (
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 p-4 sm:p-6 pb-4 border-b border-border shrink-0 bg-background">
+          <div className="flex items-start gap-2">
+            <button
+              type="button"
+              onClick={() => setShowListMobile(true)}
+              className="md:hidden shrink-0 mt-0.5 text-xs font-mono text-text/60 hover:text-text px-2 py-1 border border-border rounded-md"
+            >
+              ← Volver
+            </button>
+            <div>
+              <h2 className="text-lg sm:text-xl font-semibold">
+                {isEditMode ? "Editar" : "Registrar"}{" "}
+                {activeType === "garment" ? "Prenda Individual" : "Fardo"}
+              </h2>
+              <p className="text-xs text-text/70 font-mono mt-1">
+                {isEditMode
+                  ? "Actualiza la información del inventario"
+                  : "Ingresa la información inicial para el inventario"}
+              </p>
+            </div>
           </div>
-        </div>
 
-        {!isEditMode && (
-          <div className="flex p-1 bg-border/30 rounded-lg gap-1 font-mono text-xs w-fit">
-            <button
-              type="button"
-              onClick={() => handleSwitchType("bale")}
-              className={`px-3 py-1.5 rounded-md transition-all ${
-                activeType === "bale"
-                  ? "bg-background font-medium shadow-sm border border-border"
-                  : "text-text/60 hover:text-text"
-              }`}
-            >
-              Fardo
-            </button>
-            <button
-              type="button"
-              onClick={() => handleSwitchType("garment")}
-              className={`px-3 py-1.5 rounded-md transition-all ${
-                activeType === "garment"
-                  ? "bg-background font-medium shadow-sm border border-border"
-                  : "text-text/60 hover:text-text"
-              }`}
-            >
-              Prenda
-            </button>
-          </div>
-        )}
-      </div>
+          {!isEditMode && (
+            <div className="flex p-1 bg-border/30 rounded-lg gap-1 font-mono text-xs w-fit">
+              <button
+                type="button"
+                onClick={() => handleSwitchType("bale")}
+                className={`px-3 py-1.5 rounded-md transition-all ${
+                  activeType === "bale"
+                    ? "bg-background font-medium shadow-sm border border-border"
+                    : "text-text/60 hover:text-text"
+                }`}
+              >
+                Fardo
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSwitchType("garment")}
+                className={`px-3 py-1.5 rounded-md transition-all ${
+                  activeType === "garment"
+                    ? "bg-background font-medium shadow-sm border border-border"
+                    : "text-text/60 hover:text-text"
+                }`}
+              >
+                Prenda
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-6">
         <form

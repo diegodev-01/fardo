@@ -1,52 +1,54 @@
 import { model, models, Schema } from "mongoose";
 
 export interface IGarment {
-    _id: string;
-    BaleId?: string;
-    code?: string;
-    name: string;
-    price: number;
-    quantity?: number;
-    state: "DISPONIBLE" | "DEFECTUOSO" | "RESERVADO" | "VENDIDO";
-    size?: string;
-    garmentType?: string;
-    grade?: string;
-    description?: string;
-    color?: string;
-    imageUrl?: string;
-    salesperson?: string;
-    createdAt: Date;
-    updatedAt: Date;
-    deletedAt?: Date;
+  _id: string;
+  BaleId?: string;
+  code?: string;
+  name: string;
+  price: number;
+  quantity?: number;
+  state: "DISPONIBLE" | "DEFECTUOSO" | "RESERVADO" | "VENDIDO";
+  isSold: boolean;
+  size?: string;
+  garmentType?: string;
+  grade?: string;
+  description?: string;
+  color?: string;
+  imageUrl?: string;
+  salesperson?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt?: Date;
 }
 
 const GarmentSchema = new Schema<IGarment>(
-    {
-        BaleId: { type: String, required: false },
-        code: { type: String, unique: true, sparse: true, required: false },
-        name: { type: String, required: true },
-        price: { type: Number, required: true },
-        quantity: { type: Number, default: 1 },
-        state: {
-            type: String,
-            enum: ["DISPONIBLE", "DEFECTUOSO", "RESERVADO", "VENDIDO"],
-            default: "DISPONIBLE",
-        },
-        size: { type: String, required: false },
-        garmentType: { type: String, required: false },
-        grade: { type: String, required: false },
-        description: { type: String, required: false },
-        color: { type: String, required: false },
-        imageUrl: { type: String },
-        salesperson: { type: Schema.Types.ObjectId, ref: "User", required: false },
+  {
+    BaleId: { type: String, required: false },
+    code: { type: String, unique: true, sparse: true, required: false },
+    name: { type: String, required: true },
+    price: { type: Number, required: true },
+    quantity: { type: Number, default: 1 },
+    state: {
+      type: String,
+      enum: ["DISPONIBLE", "DEFECTUOSO", "RESERVADO", "VENDIDO"],
+      default: "DISPONIBLE",
+    },
+    isSold: { type: Boolean, default: false },
+    size: { type: String, required: false },
+    garmentType: { type: String, required: false },
+    grade: { type: String, required: false },
+    description: { type: String, required: false },
+    color: { type: String, required: false },
+    imageUrl: { type: String },
+    salesperson: { type: Schema.Types.ObjectId, ref: "User", required: false },
 
-        createdAt: { type: Date, default: Date.now },
-        updatedAt: { type: Date, default: Date.now },
-        deletedAt: { type: Date, default: null },
-    },
-    {
-        timestamps: true,
-    },
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now },
+    deletedAt: { type: Date, default: null },
+  },
+  {
+    timestamps: true,
+  },
 );
 
 export default models.Garment || model("Garment", GarmentSchema);

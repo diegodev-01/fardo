@@ -13,9 +13,9 @@ export default async function OrdersLayout({
     <div className="flex flex-col md:flex-row h-full w-full">
       <OrdersAside initialOrders={orders} />
 
-      <main className="flex flex-col h-full w-full flex-1 overflow-y-auto">
+      <div className="flex flex-col h-full w-full flex-1 overflow-hidden">
         {children}
-      </main>
+      </div>
     </div>
   );
 }

@@ -112,7 +112,7 @@ export const POST = withRole(["admin", "salesperson"], async (req, session) => {
 
     const baleModel = (await import("@/lib/models/bale.model")).default;
     await baleModel.findByIdAndUpdate(baleId, {
-      $inc: { currentPieces: -quantity },
+      $inc: { singlePieces: quantity },
     });
   }
   const newGarment = await garmentModel.create(garmentData);

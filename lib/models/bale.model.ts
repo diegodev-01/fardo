@@ -31,6 +31,12 @@ const BaleSchema = new Schema<IBale>(
           type: Number,
           required: true,
         },
+        currentPieces: {
+          type: Number,
+          default: function (this: { quantity: number }) {
+            return this.quantity;
+          },
+        },
         MinPiecePrice: {
           type: Number,
           required: true,
@@ -45,6 +51,10 @@ const BaleSchema = new Schema<IBale>(
         },
       },
     ],
+    singlePieces: {
+      type: Number,
+      default: 0,
+    },
 
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },

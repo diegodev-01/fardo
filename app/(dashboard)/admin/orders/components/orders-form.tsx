@@ -20,6 +20,9 @@ import { Controller, useForm } from "react-hook-form";
 import CustomerForm from "../../customers/components/customer-form";
 import { IGarment } from "@/lib/models/garment.model";
 import { IDelivery } from "@/lib/models/delivery.model";
+import { InventoryForm } from "../../inventory/components/inventory-form";
+import DeliveryForm from "../../settings/delivery/components/delivery-form";
+import { InventoryProvider } from "../../inventory/inventory-context";
 
 const paymentStates = [
   { value: "PENDIENTE", label: "Pendiente" },
@@ -116,7 +119,6 @@ const OrdersForm = () => {
 
   console.log(customersOptions);
 
-  // 3. Callback al crear un cliente nuevo desde el modal
   const handleCustomerCreated = (newCustomer: ICustomer) => {
     const newOption: SelectOption = {
       value: newCustomer._id!,
@@ -124,17 +126,13 @@ const OrdersForm = () => {
       searchTerms: `${newCustomer.name} ${newCustomer.lastname} ${newCustomer.phone || ""}`,
     };
 
-    // Agregar a la lista del select
     setCustomersOptions((prev) => [...prev, newOption]);
 
-    // Auto-seleccionar en el formulario
     setValue("customerId", newCustomer._id!, { shouldValidate: true });
 
-    // Cerrar el modal
     setActiveModal(null);
   };
 
-  // 4. Submit del formulario
   const handleFormSubmit = async (data: SaleSchemaType) => {
     console.log("Datos a guardar:", data);
     try {
@@ -333,9 +331,14 @@ const OrdersForm = () => {
             {activeModal === "customer" ? (
               <CustomerForm onSuccess={handleCustomerCreated} />
             ) : activeModal === "delivery" ? (
-              <div>Form de tipo de entrega</div>
+              <DeliveryForm />
             ) : (
-              <div>Form de Prenda individual o de Fardo</div>
+              <InventoryProvider>
+                <InventoryForm
+                  basePath="/admin/inventory"
+                  defaultType="garment"
+                />
+              </InventoryProvider>
             )}
           </>
         </Modal>

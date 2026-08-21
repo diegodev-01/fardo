@@ -20,10 +20,12 @@ export interface IBale {
   pieceTypes: {
     type: string;
     quantity: number;
+    currentPieces: number;
     MinPiecePrice: number;
     MaxPiecePrice?: number;
     category: string;
   }[];
+  singlePieces: number;
   createdAt: Date;
   updatedAt: Date | null;
   deletedAt?: Date | null;
