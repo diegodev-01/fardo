@@ -5,11 +5,11 @@ export const customerSchema = z.object({
   lastname: z.string().min(1, "El apellido es requerido"),
   phone: z.string().min(1, "El teléfono es requerido"),
   address: z.object({
-    department: z.string().min(1, "El departamento es requerido"),
-    address: z.string().min(1, "La dirección es requerida"),
-    city: z.string().min(1, "La ciudad es requerida"),
+    department: z.string().optional(),
+    address: z.string().optional(),
+    city: z.string().optional(),
   }),
-  email: z.string().email("El email no es válido").optional(),
+  email: z.string().email("El email no es válido").optional().or(z.literal("")),
 });
 
 export type Customer = z.infer<typeof customerSchema>;

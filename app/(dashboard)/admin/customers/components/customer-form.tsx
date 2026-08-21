@@ -56,27 +56,36 @@ const CustomerForm = ({ onSuccess }: CustomerFormProps) => {
       phone: "",
       address: {
         department: "Cochabamba",
-        address: "",
-        city: "",
+        address: undefined,
+        city: undefined,
       },
-      email: "",
+      email: undefined,
     },
   });
   const selectedDepartment = watch("address.department");
 
   const handleFormSubmit = async (data: Customer) => {
-    const result = await createCustomerAction(data);
-
-    if (!result.success || !result.data) {
-      console.error(result.error ?? "Failed to create customer");
-      return;
-    }
-
-    if (onSuccess) {
-      onSuccess(result.data as Customer);
-    }
-    console.log("Form submitted with data:", data);
+  const cleanData: Customer = {
+    ...data,
+    email: data.email || undefined,
+    address: {
+      department: data.address?.department || undefined,
+      city: data.address?.city || undefined,
+      address: data.address?.address || undefined,
+    },
   };
+
+  const result = await createCustomerAction(cleanData);
+
+  if (!result.success || !result.data) {
+    console.error(result.error ?? "Failed to create customer");
+    return;
+  }
+
+  if (onSuccess) {
+    onSuccess(result.data as Customer);
+  }
+};
   return (
     <div className="p-4">
       <div className="flex-1 overflow-y-auto p-4 sm:p-6">
@@ -150,13 +159,14 @@ const CustomerForm = ({ onSuccess }: CustomerFormProps) => {
                     ? "Selecciona una ciudad"
                     : "Elige un departamento primero"}
                 </option>
-                {(BOLIVIA_DEPARTAMENTOS[selectedDepartment] ?? []).map(
-                  (city) => (
-                    <option key={city} value={city}>
-                      {city}
-                    </option>
-                  ),
-                )}
+                {(selectedDepartment
+                  ? BOLIVIA_DEPARTAMENTOS[selectedDepartment]
+                  : []
+                ).map((city) => (
+                  <option key={city} value={city}>
+                    {city}
+                  </option>
+                ))}
               </select>
               {errors.address?.city && (
                 <p className="text-red-500 text-xs mt-1">
