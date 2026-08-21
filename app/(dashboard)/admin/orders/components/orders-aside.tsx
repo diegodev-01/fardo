@@ -26,7 +26,7 @@ interface OrderAsideProps {
 const OrdersAside = ({ initialOrders }: OrderAsideProps) => {
   const pathname = usePathname();
 
-  const isBaseRoute = pathname === "/admin/customers";
+  const isBaseRoute = pathname === "/admin/orders";
 
   return (
     <aside
@@ -61,7 +61,7 @@ const OrdersAside = ({ initialOrders }: OrderAsideProps) => {
             createdAt={card.createdAt}
             customer={card.customer}
             garment={card.garment}
-            isSelected={pathname === `/admin/customers/${card._id}`}
+            isSelected={pathname === `/admin/orders/${card._id}`}
           />
         ))}
       </ul>
