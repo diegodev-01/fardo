@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { guard } from "@/lib/auth/guards";
+import { invalidateMetrics } from "@/lib/services/metrics.service";
 import { connectDB } from "../db";
 import garmentModel from "../models/garment.model";
 import { LiveSessionModel } from "../models/live.model";
@@ -24,6 +25,7 @@ async function run<T>(fn: () => Promise<T>, fallback: string) {
   if (!g.ok) return { success: false, error: g.error } as Fail;
   try {
     const data = await fn();
+    invalidateMetrics();
     revalidatePath("/admin/live");
     revalidatePath("/admin/orders");
     return { success: true as const, data: JSON.parse(JSON.stringify(data ?? null)) };

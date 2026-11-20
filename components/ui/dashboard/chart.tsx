@@ -2,16 +2,12 @@
 
 import React, { useEffect, useRef, useState } from "react";
 
-type WeekDay =
-  | "Lunes"
-  | "Martes"
-  | "Miércoles"
-  | "Jueves"
-  | "Viernes"
-  | "Sábado"
-  | "Domingo";
+import { WEEK_DAYS, type WeekDay } from "./week-days";
 
-interface ChartData {
+export { WEEK_DAYS };
+export type { WeekDay };
+
+export interface ChartData {
   labels: WeekDay[];
   datasets: {
     day: WeekDay;
@@ -250,9 +246,9 @@ export const Chart: React.FC<ChartProps> = ({ data: externalData }) => {
                 {hoveredPoint.day}
               </span>
               <div className="flex items-center justify-between gap-2 mt-0.5">
-                <span className="text-primary font-bold">:</span>
+                <span className="text-primary font-bold">Ventas</span>
                 <span className="font-mono font-bold text-gray-800 dark:text-gray-100">
-                  ${hoveredPoint.val}
+                  Bs {hoveredPoint.val}
                 </span>
               </div>
             </div>

@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { ButtonComponent } from "@/components/ui/button-component";
 import { InputComponent } from "@/components/ui/form/input-component";
 import { Customer, customerSchema } from "@/lib/schemas/customer";
@@ -37,17 +40,20 @@ const DEPARTAMENTOS = Object.keys(BOLIVIA_DEPARTAMENTOS);
 
 interface CustomerFormProps {
   onSuccess?: (newCustomer: Customer) => void;
+  /** Where "Cancelar" goes; defaults to going back. */
+  onCancel?: () => void;
 }
 
-const CustomerForm = ({ onSuccess }: CustomerFormProps) => {
+const CustomerForm = ({ onSuccess, onCancel }: CustomerFormProps) => {
   const router = useRouter();
+  const [submitError, setSubmitError] = useState("");
   const {
     register,
     handleSubmit,
     watch,
     setValue,
     control,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<Customer>({
     resolver: zodResolver(customerSchema),
     defaultValues: {
@@ -78,12 +84,15 @@ const CustomerForm = ({ onSuccess }: CustomerFormProps) => {
   const result = await createCustomerAction(cleanData);
 
   if (!result.success || !result.data) {
-    console.error(result.error ?? "Failed to create customer");
+    setSubmitError(result.error ?? "No se pudo crear el cliente");
     return;
   }
 
+  setSubmitError("");
   if (onSuccess) {
     onSuccess(result.data as Customer);
+  } else {
+    router.push("/admin/customers");
   }
 };
   return (
@@ -97,7 +106,7 @@ const CustomerForm = ({ onSuccess }: CustomerFormProps) => {
             <div>
               <InputComponent
                 label="Nombre"
-                placeholder="Nombre del fardo o prenda, ejemplo: Fardo de camisetas, Camiseta Nike, etc."
+                placeholder="Nombre"
                 {...register("name")}
                 error={errors.name?.message}
               />
@@ -227,11 +236,19 @@ const CustomerForm = ({ onSuccess }: CustomerFormProps) => {
             </div>
           </div>
 
+          {submitError && (
+            <p role="alert" className="text-sm text-danger">
+              {submitError}
+            </p>
+          )}
+
           <div className="flex flex-wrap gap-3 pt-4 border-t border-border mt-6">
-            <ButtonComponent type="submit">Guardar Registro</ButtonComponent>
+            <ButtonComponent type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Guardando..." : "Guardar Registro"}
+            </ButtonComponent>
             <button
               type="button"
-              onClick={() => router.push("/admin/orders")}
+              onClick={() => (onCancel ? onCancel() : router.back())}
               className="px-4 py-2 text-xs text-danger/70 hover:text-text font-mono transition-colors"
             >
               Cancelar

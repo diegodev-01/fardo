@@ -6,6 +6,7 @@ import { formSchema, InventoryFormData } from "@/lib/schemas/bale";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
+import { useToast } from "@/components/ui/toast";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { useInventory } from "../inventory-context";
 import { gradeOptions, sizeOptions } from "../lib/types";
@@ -81,6 +82,7 @@ export function InventoryForm({
     : (searchParams.get("type") as "bale" | "garment") || defaultType;
 
   const { bales, pieceOptions, refresh, setShowListMobile } = useInventory();
+  const { toast } = useToast();
 
   const [salespersonsOptions, setSalespersonsOptions] = useState<
     SelectOption[]
@@ -88,28 +90,33 @@ export function InventoryForm({
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const fetchSalespersons = async () => {
-      try {
-        setIsLoading(true);
-        const usersData = await getAdminsAction();
-        if (usersData && Array.isArray(usersData.data)) {
-          const mappedUsers: SelectOption[] = usersData.data
+    if (hideSalespersonField) {
+      setIsLoading(false);
+      return;
+    }
+    let cancelled = false;
+    Promise.all([getAdminsAction(), getSalespersonsAction()])
+      .then((results) => {
+        if (cancelled) return;
+        const users = results.flatMap((r) => (r.success && Array.isArray(r.data) ? r.data : []));
+        setSalespersonsOptions(
+          users
             .filter((u): u is AdminSummary & { _id: string } => Boolean(u._id))
             .map((u) => ({
               value: u._id,
               label: u.name,
               searchTerms: `${u.name} ${u.phone || ""}`,
-            }));
-          setSalespersonsOptions(mappedUsers);
-        }
-      } catch (error) {
-        console.error("Error al cargar vendedores:", error);
-      } finally {
-        setIsLoading(false);
-      }
+            })),
+        );
+      })
+      .catch((error) => console.error("Error al cargar vendedores:", error))
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+    return () => {
+      cancelled = true;
     };
-    fetchSalespersons();
-  }, []);
+  }, [hideSalespersonField]);
 
   const {
     register,
@@ -117,7 +124,7 @@ export function InventoryForm({
     control,
     watch,
     reset,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -276,7 +283,7 @@ export function InventoryForm({
         });
 
         if (!result.success) {
-          alert(result.error || "Ocurrió un error al actualizar");
+          toast(result.error || "Ocurrió un error al actualizar", "error");
           return;
         }
 
@@ -319,18 +326,26 @@ export function InventoryForm({
       });
 
       if (!response.ok) {
-        const err = await response.json();
-        alert(
+        const err = await response.json().catch(() => ({}));
+        toast(
           err.error ||
             `Ocurrió un error al ${isEditMode ? "actualizar" : "registrar"}`,
+          "error",
         );
         return;
       }
 
       await refresh();
-      router.push(isEditMode ? basePath : `${basePath}/register?type=garment`);
+      toast(isEditMode ? "Cambios guardados" : "Registrado correctamente", "success");
+      // After a bale go back to the list; after a garment keep registering garments.
+      router.push(
+        isEditMode || activeType === "bale"
+          ? basePath
+          : `${basePath}/register?type=garment`,
+      );
     } catch (error) {
       console.error("Error de red:", error);
+      toast("Error de red. Revisa tu conexión e intenta de nuevo.", "error");
     }
   };
 
@@ -641,6 +656,7 @@ export function InventoryForm({
                   )}
                 </div>
 
+                {!hideSalespersonField && (
                 <span className="flex-1">
                   <label className="block text-xs font-medium text-text/70 mb-1">
                     Vendedor
@@ -663,6 +679,7 @@ export function InventoryForm({
                     )}
                   />
                 </span>
+                )}
 
                 <div>
                   <InputComponent
@@ -771,8 +788,12 @@ export function InventoryForm({
           </div>
 
           <div className="flex flex-wrap gap-3 pt-4 border-t border-border mt-6">
-            <ButtonComponent type="submit">
-              {isEditMode ? "Guardar Cambios" : "Guardar Registro"}
+            <ButtonComponent type="submit" disabled={isSubmitting}>
+              {isSubmitting
+                ? "Guardando..."
+                : isEditMode
+                  ? "Guardar Cambios"
+                  : "Guardar Registro"}
             </ButtonComponent>
             <button
               type="button"

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { ZodError } from "zod";
 import { guard } from "@/lib/auth/guards";
+import { invalidateMetrics } from "@/lib/services/metrics.service";
 import type { PaymentState } from "@/lib/domain/sales";
 import { createSaleCore, updatePaymentCore } from "@/lib/services/sale.service";
 import type { SaleSchemaType } from "../schemas/sale";
@@ -20,6 +21,7 @@ function toFail(error: unknown, fallback: string): Fail {
 }
 
 async function revalidateSales() {
+  invalidateMetrics();
   revalidatePath("/admin/orders");
   revalidatePath("/admin/inventory");
   revalidatePath("/salesperson/inventory");

@@ -42,7 +42,7 @@ export const GarmentListItem = React.memo(
             </p>
           </div>
 
-          <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute top-2 right-2 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
             {/* Botones de editar/eliminar omitidos para el agrupador general */}
           </div>
 
@@ -103,17 +103,21 @@ export const BaleListItem = React.memo(
     card: Card;
     isSelected: boolean;
     onSelect: (card: Card) => void;
-    onDelete?: (id: string) => void;
+    onDelete?: (id: string) => void | Promise<void>;
     onEdit?: (id: string) => void;
   }) => {
     const [isDeleting, setIsDeleting] = useState(false);
     const pct = calculatePercentage(card.currentPieces, card.totalQuantity);
 
-    const handleDelete = (e: React.MouseEvent) => {
+    const handleDelete = async (e: React.MouseEvent) => {
       e.stopPropagation();
       if (onDelete && card._id) {
         setIsDeleting(true);
-        onDelete(String(card._id));
+        try {
+          await onDelete(String(card._id));
+        } finally {
+          setIsDeleting(false);
+        }
       }
     };
 
@@ -151,16 +155,18 @@ export const BaleListItem = React.memo(
           <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={handleEdit}
-              className="p-1.5 bg-background border border-border rounded-md text-text/60 hover:text-primary transition-colors"
+              className="p-2 md:p-1.5 bg-background border border-border rounded-md text-text/60 hover:text-primary transition-colors"
               title="Editar"
+              aria-label="Editar"
             >
               <Edit className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={handleDelete}
               disabled={isDeleting}
-              className="p-1.5 bg-background border border-border rounded-md text-red-500/70 hover:text-red-500 transition-colors"
+              className="p-2 md:p-1.5 bg-background border border-border rounded-md text-red-500/70 hover:text-red-500 transition-colors disabled:opacity-60"
               title="Eliminar"
+              aria-label="Eliminar"
             >
               {isDeleting ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />

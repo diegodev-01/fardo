@@ -13,12 +13,13 @@ import {
   Settings,
   ChevronDown,
   Truck,
-  CreditCard,
   Radio,
 } from "lucide-react";
 import { SidebarFooter } from "@/components/common/sidebar-footer";
 
-const NAV_ITEMS = [
+type NavItem = { label: string; href: string; icon: typeof LayoutDashboard };
+
+const ADMIN_NAV: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Fardos / Inventario", href: "/admin/inventory", icon: Package },
   { label: "En vivo", href: "/admin/live", icon: Radio },
@@ -26,6 +27,21 @@ const NAV_ITEMS = [
   { label: "Clientes", href: "/admin/customers", icon: ListOrdered },
   { label: "Reportes & Ventas", href: "/admin/reports", icon: BarChart3 },
 ];
+
+const SALESPERSON_NAV: NavItem[] = [
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Fardos / Inventario", href: "/salesperson/inventory", icon: Package },
+];
+
+const DEFAULT_NAV: NavItem[] = [
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+];
+
+function navFor(role?: string): NavItem[] {
+  if (role === "admin") return ADMIN_NAV;
+  if (role === "salesperson") return SALESPERSON_NAV;
+  return DEFAULT_NAV;
+}
 
 export function MobileSidebar({
   userName,
@@ -37,7 +53,7 @@ export function MobileSidebar({
   onSignOut: () => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const pathname = usePathname();
 
   return (
@@ -91,9 +107,11 @@ export function MobileSidebar({
           </div>
 
           <nav className="space-y-1">
-            {NAV_ITEMS.map((item) => {
+            {navFor(userRole).map((item) => {
               const Icon = item.icon;
-              const isActive = pathname === item.href;
+              const isActive =
+                pathname === item.href ||
+                (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`));
               return (
                 <Link
                   key={item.href}
@@ -114,9 +132,11 @@ export function MobileSidebar({
         </div>
 
         <div className="p-6 pt-0 space-y-1">
+          {userRole === "admin" && (
+            <>
           {/* Botón Configuración */}
           <button
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={() => setSettingsOpen(!settingsOpen)}
             className="flex w-full items-center justify-between px-3 py-2.5 text-sm font-medium rounded-xl transition-colors text-text hover:text-foreground hover:bg-primary/10"
           >
             <div className="flex items-center gap-3">
@@ -125,7 +145,7 @@ export function MobileSidebar({
             </div>
             <ChevronDown
               className={`h-4 w-4 transition-transform duration-300 ease-in-out ${
-                isOpen ? "rotate-180" : ""
+                settingsOpen ? "rotate-180" : ""
               }`}
             />
           </button>
@@ -133,7 +153,7 @@ export function MobileSidebar({
           {/* Submenú Animado con Grid */}
           <div
             className={`grid transition-all duration-300 ease-in-out ${
-              isOpen
+              settingsOpen
                 ? "grid-rows-[1fr] opacity-100 mt-1"
                 : "grid-rows-[0fr] opacity-0 mt-0"
             }`}
@@ -158,6 +178,9 @@ export function MobileSidebar({
               </Link> */}
             </div>
           </div>
+
+            </>
+          )}
 
           <SidebarFooter
             userName={userName}

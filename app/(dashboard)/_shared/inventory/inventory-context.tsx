@@ -1,6 +1,14 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   getBales,
   getGarments,
@@ -27,6 +35,50 @@ interface InventoryContextValue {
 
 const InventoryContext = createContext<InventoryContextValue | null>(null);
 
+async function fetchInventory(page: number) {
+  const [pieceOptions, balesRes, garmentsRes] = await Promise.all([
+    getpieceTypes(),
+    getBales(page, 10),
+    getGarments(1, 10),
+  ]);
+
+  const bales: Card[] = (balesRes.data || []).map((bale: IBale) => ({
+    ...bale,
+    type: "bale" as const,
+  }));
+
+  const info = garmentsRes.info ?? {};
+  const garmentCard: Card = {
+    _id: "garments-total",
+    weight: 0,
+    pieceTypes: [],
+    singlePieces: 0,
+    sendPrice: 0,
+    updatedAt: new Date(),
+    deletedAt: null,
+    type: "garment",
+    name: "Prendas individuales",
+    color: "#000000",
+    state: "DISPONIBLE",
+    description: "Prendas fuera de fardos",
+    price: info.totalCost || 0,
+    createdAt: new Date(),
+    totalQuantity: info.totalQuantity || 0,
+    availableQuantity: info.availableQuantity || 0,
+    // units still available over total units, so the progress bar stays within 0-100%
+    currentPieces: info.availableQuantity || 0,
+    pieces: garmentsRes.pieces || [],
+    income: 0,
+  };
+
+  return {
+    pieceOptions: pieceOptions as { label: string; value: string }[],
+    bales,
+    garmentCard,
+    totalPages: balesRes.pagination?.totalPages || 1,
+  };
+}
+
 export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const [pieceOptions, setPieceOptions] = useState<
     { label: string; value: string }[]
@@ -38,116 +90,40 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const [totalPages, setTotalPages] = useState(1);
   const [showListMobile, setShowListMobile] = useState(true);
 
-  const fetchData = async (currentPage = page) => {
-    try {
-      setLoading(true);
-      const [pieceRes, balesRes, garmentsRes] = await Promise.all([
-        getpieceTypes(),
-        getBales(currentPage, 10),
-        getGarments(1, 10),
-      ]);
+  // Latest request wins: ignores slow responses from an older page/refresh.
+  const requestId = useRef(0);
+  const pageRef = useRef(page);
 
-      setPieceOptions(pieceRes);
-
-      setTotalPages(balesRes.pagination?.totalPages || 1);
-
-      const formattedBales = (balesRes.data || []).map((bale: IBale) => ({
-        ...bale,
-        type: "bale" as const,
-      }));
-      setBales(formattedBales);
-
-      const singleGarmentCard: Card = {
-        _id: "garments-total",
-        weight: 0,
-        pieceTypes: [],
-        singlePieces: 0,
-        sendPrice: 0,
-        updatedAt: new Date(),
-        deletedAt: null,
-        type: "garment",
-        name: "Prendas individuales",
-        color: "#000000",
-        state: "DISPONIBLE",
-        description: "Prendas fuera de fardos",
-        price: garmentsRes.info?.totalCost || 0,
-        createdAt: new Date(),
-        totalQuantity: garmentsRes.info?.totalQuantity || 0,
-        availableQuantity: garmentsRes.info?.availableQuantity || 0,
-        currentPieces: garmentsRes.info?.totalDocs || 0,
-        pieces: garmentsRes.pieces || [],
-        income: 0,
-      };
-
-      setGarmentCard(singleGarmentCard);
-    } catch (error) {
-      console.error("Error fetching inventory data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const apply = useCallback((data: Awaited<ReturnType<typeof fetchInventory>>) => {
+    setPieceOptions(data.pieceOptions);
+    setBales(data.bales);
+    setGarmentCard(data.garmentCard);
+    setTotalPages(data.totalPages);
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
-    let cancelled = false;
-
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        const [pieceRes, balesRes, garmentsRes] = await Promise.all([
-          getpieceTypes(),
-          getBales(page, 10),
-          getGarments(1, 10),
-        ]);
-
-        if (cancelled) return;
-
-        setPieceOptions(pieceRes);
-        setTotalPages(balesRes.pagination?.totalPages || 1);
-
-        const formattedBales = (balesRes.data || []).map((bale: IBale) => ({
-          ...bale,
-          type: "bale" as const,
-        }));
-        setBales(formattedBales);
-
-        const singleGarmentCard: Card = {
-          _id: "garments-total",
-          weight: 0,
-          pieceTypes: [],
-          singlePieces: 0,
-          sendPrice: 0,
-          updatedAt: new Date(),
-          deletedAt: null,
-          type: "garment",
-          name: "Prendas individuales",
-          color: "#000000",
-          state: "DISPONIBLE",
-          description: "Prendas fuera de fardos",
-          price: garmentsRes.info?.totalCost || 0,
-          createdAt: new Date(),
-          totalQuantity: garmentsRes.info?.totalQuantity || 0,
-          availableQuantity: garmentsRes.info?.availableQuantity || 0,
-          currentPieces: garmentsRes.info?.totalDocs || 0,
-          pieces: garmentsRes.pieces || [],
-          income: 0,
-        };
-
-        setGarmentCard(singleGarmentCard);
-      } catch (error) {
+    pageRef.current = page;
+    const id = ++requestId.current;
+    fetchInventory(page)
+      .then((data) => {
+        if (id === requestId.current) apply(data);
+      })
+      .catch((error) => {
         console.error("Error fetching inventory data:", error);
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
+        if (id === requestId.current) setLoading(false);
+      });
+  }, [page, apply]);
 
-    void loadData();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [page]);
+  const refresh = useCallback(async () => {
+    const id = ++requestId.current;
+    try {
+      const data = await fetchInventory(pageRef.current);
+      if (id === requestId.current) apply(data);
+    } catch (error) {
+      console.error("Error fetching inventory data:", error);
+    }
+  }, [apply]);
 
   const total = bales.length + (garmentCard ? 1 : 0);
   const actives =
@@ -159,24 +135,39 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       (b.currentPieces ?? 0) >= (b.totalQuantity ?? 0),
   ).length;
 
+  const value = useMemo(
+    () => ({
+      pieceOptions,
+      bales,
+      garmentCard,
+      loading,
+      total,
+      actives,
+      completes,
+      showListMobile,
+      setShowListMobile,
+      refresh,
+      page,
+      setPage,
+      totalPages,
+    }),
+    [
+      pieceOptions,
+      bales,
+      garmentCard,
+      loading,
+      total,
+      actives,
+      completes,
+      showListMobile,
+      refresh,
+      page,
+      totalPages,
+    ],
+  );
+
   return (
-    <InventoryContext.Provider
-      value={{
-        pieceOptions,
-        bales,
-        garmentCard,
-        loading,
-        total,
-        actives,
-        completes,
-        showListMobile,
-        setShowListMobile,
-        refresh: fetchData,
-        page,
-        setPage,
-        totalPages,
-      }}
-    >
+    <InventoryContext.Provider value={value}>
       {children}
     </InventoryContext.Provider>
   );

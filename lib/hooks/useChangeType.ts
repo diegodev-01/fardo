@@ -2,63 +2,73 @@
 
 import { useEffect, useState } from "react";
 
-export const useChangeType = () => {
-  const [changeType, setChangeType] = useState<number>(0);
+const KEY_RATE = "changeType";
+const KEY_DATE = "changeTypeDate";
 
-  useEffect(() => {
-    const fetchChangeType = async () => {
-      const rate = await getChangeType();
-      setChangeType(rate);
-    };
+/** Day key in Bolivia time (UTC-4), so the cache flips at local midnight. */
+const localDay = () => new Date(Date.now() - 4 * 3600_000).toISOString().slice(0, 10);
 
-    fetchChangeType();
-  }, []);
-
-  return changeType;
+const read = (key: string) => {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
 };
 
-const getChangeType = async (): Promise<number> => {
-  const today = new Date().toISOString().split("T")[0];
-
-  const cachedDate = localStorage.getItem("changeTypeDate");
-  const cachedType = localStorage.getItem("changeType");
-
-  if (cachedDate === today && cachedType !== null) {
-    return JSON.parse(cachedType);
+const parseRate = (raw: string | null): number => {
+  if (!raw) return 0;
+  try {
+    const n = Number(JSON.parse(raw));
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  } catch {
+    return 0;
   }
+};
+
+// One in-flight request shared by every StatCard on the page.
+let inflight: Promise<number> | null = null;
+
+async function fetchRate(): Promise<number> {
+  const today = localDay();
+  const cached = parseRate(read(KEY_RATE));
+  if (cached && read(KEY_DATE) === today) return cached;
+
+  const base = process.env.NEXT_PUBLIC_CUCU_API_URL;
+  if (!base) return cached;
 
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_CUCU_API_URL}/tc/oficial`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP Error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const rate = data.tc_oficial.base;
-
-    localStorage.setItem("changeType", JSON.stringify(rate));
-    localStorage.setItem("changeTypeDate", today);
-
+    const res = await fetch(`${base}/tc/oficial`, { headers: { "Content-Type": "application/json" } });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const rate = Number((await res.json())?.tc_oficial?.base);
+    if (!Number.isFinite(rate) || rate <= 0) throw new Error("Invalid rate");
+    try {
+      localStorage.setItem(KEY_RATE, JSON.stringify(rate));
+      localStorage.setItem(KEY_DATE, today);
+    } catch {}
     return rate;
   } catch (error) {
     console.error("Error al obtener el tipo de cambio:", error);
-
-    if (cachedType !== null) {
-      return JSON.parse(cachedType);
-    }
-
-    return (
-      localStorage.getItem("changeType") &&
-      JSON.parse(localStorage.getItem("changeType")!)
-    );
+    return cached; // stale rate, or 0 when unknown
   }
+}
+
+/** Official BOB→USD rate, or 0 while loading / unavailable. Callers must treat 0 as "unknown". */
+export const useChangeType = () => {
+  const [rate, setRate] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    inflight ??= fetchRate().finally(() => {
+      inflight = null;
+    });
+    void inflight.then((r) => {
+      if (!cancelled) setRate(r);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return rate;
 };

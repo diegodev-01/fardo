@@ -20,7 +20,7 @@ export async function createCustomerAction(data: Customer) {
     // Revalida la lista de clientes para que se actualice la pantalla
     revalidatePath("/admin/customers");
 
-    return { success: true, data: newCustomer };
+    return { success: true, data: JSON.parse(JSON.stringify(newCustomer)) };
   } catch (error) {
     console.error("Error en createCustomerAction:", error);
     const message =

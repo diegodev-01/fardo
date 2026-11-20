@@ -1,11 +1,23 @@
 import { z } from "zod";
 
+const isNonNegative = (v: string) => v.trim() !== "" && Number.isFinite(Number(v)) && Number(v) >= 0;
+
+/** Required numeric input kept as a string (form inputs), validated as a number >= 0. */
+const requiredNumber = (required: string) =>
+  z.string().min(1, required).refine(isNonNegative, "Debe ser un número mayor o igual a 0");
+
+/** Optional numeric input: empty is fine, otherwise a number >= 0. */
+const optionalNumber = z
+  .string()
+  .optional()
+  .refine((v) => !v || isNonNegative(v), "Debe ser un número mayor o igual a 0");
+
 const pieceTypeSchema = z
   .object({
     type: z.string().min(1, "Selecciona un tipo"),
     quantity: z.coerce.number().int().min(1, "Mínimo 1"),
-    MinPiecePrice: z.string().min(1, "El precio mínimo es requerido"),
-    MaxPiecePrice: z.string().optional(),
+    MinPiecePrice: requiredNumber("El precio mínimo es requerido"),
+    MaxPiecePrice: optionalNumber,
     category: z.string().min(1, "Selecciona una categoría"),
   })
   .refine(
@@ -25,7 +37,7 @@ export const formSchema = z
     type: z.enum(["bale", "garment"]).default("bale"),
     name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
     description: z.string().optional(),
-    price: z.string().min(1, "El precio es requerido"),
+    price: requiredNumber("El precio es requerido"),
     state: z
       .enum(["DISPONIBLE", "DEFECTUOSO", "RESERVADO", "VENDIDO"])
       .default("DISPONIBLE"),
@@ -43,8 +55,8 @@ export const formSchema = z
       .int()
       .min(1, "El total de piezas es requerido")
       .optional(),
-    weight: z.string().optional(),
-    sendPrice: z.string().optional(),
+    weight: optionalNumber,
+    sendPrice: optionalNumber,
     pieceTypes: z.array(pieceTypeSchema).default([]),
   })
   .superRefine((data, ctx) => {

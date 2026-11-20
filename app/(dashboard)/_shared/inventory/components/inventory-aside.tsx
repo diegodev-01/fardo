@@ -1,8 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { ButtonComponent } from "@/components/ui/button-component";
+import { useToast } from "@/components/ui/toast";
+import { softDeleteBaleAction } from "@/lib/actions/bale.action";
 import { useInventory } from "../inventory-context";
 import { Card } from "../lib/types";
 import { BaleListItem, GarmentListItem } from "./inventory-list-item";
@@ -13,6 +15,7 @@ interface InventoryAsideProps {
 
 export function InventoryAside({ basePath }: InventoryAsideProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const {
@@ -35,30 +38,37 @@ export function InventoryAside({ basePath }: InventoryAsideProps) {
   const activeId = segments[2];
   const activeType = searchParams.get("type") ?? "bale";
 
-  const handleSelectCard = (card: Card) => {
-    setShowListMobile(false);
-    router.push(`${basePath}/${card._id}?type=${card.type}`);
-  };
+  const handleSelectCard = useCallback(
+    (card: Card) => {
+      setShowListMobile(false);
+      router.push(`${basePath}/${card._id}?type=${card.type}`);
+    },
+    [basePath, router, setShowListMobile],
+  );
 
   const handleStartRegister = () => {
     setShowListMobile(false);
     router.push(`${basePath}/register?type=bale`);
   };
 
-  const handleDeleteBale = async (id: string) => {
-    if (!confirm("¿Seguro que deseas eliminar este fardo?")) return;
-    const { softDeleteBaleAction } = await import("@/lib/actions/bale.action");
-    const res = await softDeleteBaleAction(id);
-    if (res.success) {
-      refresh();
-    } else {
-      alert(res.error || "Error al eliminar");
-    }
-  };
+  const handleDeleteBale = useCallback(
+    async (id: string) => {
+      if (!confirm("¿Seguro que deseas eliminar este fardo?")) return;
+      const res = await softDeleteBaleAction(id);
+      if (res.success) {
+        toast("Fardo eliminado", "success");
+        await refresh();
+      } else {
+        toast(res.error || "Error al eliminar", "error");
+      }
+    },
+    [refresh, toast],
+  );
 
-  const handleEditBale = (id: string) => {
-    router.push(`${basePath}/edit/${id}`);
-  };
+  const handleEditBale = useCallback(
+    (id: string) => router.push(`${basePath}/edit/${id}`),
+    [basePath, router],
+  );
 
   const [filter, setFilter] = React.useState<
     "todos" | "disponibles" | "agotados"
@@ -71,13 +81,17 @@ export function InventoryAside({ basePath }: InventoryAsideProps) {
       ? garmentCard
       : undefined;
 
-  const filteredBales = bales.filter((bale) => {
-    if (filter === "todos") return true;
-    const isAvailable = bale.state === "DISPONIBLE";
-    if (filter === "disponibles") return isAvailable;
-    if (filter === "agotados") return !isAvailable;
-    return true;
-  });
+  const filteredBales = useMemo(
+    () =>
+      bales.filter((bale) => {
+        if (filter === "todos") return true;
+        const isAvailable = bale.state === "DISPONIBLE";
+        if (filter === "disponibles") return isAvailable;
+        if (filter === "agotados") return !isAvailable;
+        return true;
+      }),
+    [bales, filter],
+  );
 
   return (
     <aside

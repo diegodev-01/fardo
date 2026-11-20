@@ -1,8 +1,8 @@
 "use client";
 
 import { useParams, useSearchParams } from "next/navigation";
-import { useInventory } from "../inventory-context";
-import { InventoryDetail } from "../components/inventory-detail";
+import { useInventory } from "@/app/(dashboard)/_shared/inventory/inventory-context";
+import { InventoryDetail } from "@/app/(dashboard)/_shared/inventory/components/inventory-detail";
 
 export default function InventoryDetailPage() {
   const params = useParams<{ id: string }>();

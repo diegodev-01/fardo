@@ -37,13 +37,14 @@ export const StatCard = ({
           }`}
         >
           {mode === "money"
-            ? `BOB${value.toLocaleString()}`
+            ? `Bs ${value.toLocaleString("es-BO", { maximumFractionDigits: 2 })}`
             : mode === "percentage"
               ? `${value}%`
               : value}
-          {mode === "money" && (
+          {mode === "money" && changeType > 0 && (
             <span className="text-xs sm:text-sm font-normal text-text">
-              /{(value / changeType).toFixed(2)} $
+              {" "}
+              / {(value / changeType).toFixed(2)} $
             </span>
           )}
         </div>

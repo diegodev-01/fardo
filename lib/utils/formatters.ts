@@ -18,3 +18,6 @@ export const capitalize = (text?: string | null): string => {
   const trimmed = text.trim();
   return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
 };
+
+export const formatMoney = (n: number | null | undefined) =>
+  `Bs ${(n ?? 0).toLocaleString("es-BO", { maximumFractionDigits: 2 })}`;

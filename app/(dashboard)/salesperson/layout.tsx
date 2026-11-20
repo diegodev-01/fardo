@@ -8,7 +8,6 @@ export default async function SalespersonLayout({
 }) {
   const session = await auth();
   if (session?.user?.role !== "salesperson") {
-    console.log(session)
     redirect("/dashboard")
   };
 

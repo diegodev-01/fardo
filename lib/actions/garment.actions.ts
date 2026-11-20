@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { invalidateMetrics } from "@/lib/services/metrics.service";
 import { guard, ownerFilter } from "@/lib/auth/guards";
 import { connectDB } from "../db";
 import garmentModel from "../models/garment.model";
@@ -55,6 +56,7 @@ export async function softDeleteGarmentAction(id: string) {
       return { success: false, error: "Prenda no encontrada" };
     }
 
+    invalidateMetrics();
     revalidatePath("/admin/inventory");
     revalidatePath("/salesperson/inventory");
 
@@ -76,6 +78,7 @@ export async function assignMissingCodesAction(baleId?: string) {
     await connectDB();
     const count = await assignMissingCodes(baleId);
     revalidatePath("/print/labels");
+    invalidateMetrics();
     revalidatePath("/admin/inventory");
     return { success: true as const, count };
   } catch (error) {

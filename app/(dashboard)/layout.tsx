@@ -1,5 +1,6 @@
 import { MobileSidebar } from "@/components/common/mobile-sidebar";
 import { auth, signOut } from "@/lib/auth";
+import { ToastProvider } from "@/components/ui/toast";
 
 export default async function DashboardLayout({
   children,
@@ -15,6 +16,7 @@ export default async function DashboardLayout({
   };
 
   return (
+    <ToastProvider>
     <div className="flex min-h-screen bg-background text-foreground font-sans">
       <MobileSidebar
         userName={user?.name || undefined}
@@ -26,5 +28,6 @@ export default async function DashboardLayout({
         <main className="flex-1 w-full">{children}</main>
       </div>
     </div>
+    </ToastProvider>
   );
 }

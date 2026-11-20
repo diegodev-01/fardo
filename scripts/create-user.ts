@@ -6,10 +6,10 @@ async function createUser() {
   try {
     await connectDB();
 
-    const email = "diego@gmail.com";
+    const email = "diego@dieguito.dev";
     const rawPassword = "Diego1234$";
     const name = "Diego";
-    const phone = "+59179778503";
+    const phone = "+59179778502";
     const role = "admin";
 
     // 1. Comprobar si ya existe

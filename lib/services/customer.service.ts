@@ -27,9 +27,16 @@ export const getCustomers = async () => {
 export const createCustomer = async (customerData: Customer) => {
   try {
     await connectDB();
+    if (await customerModel.exists({ phone: customerData.phone })) {
+      throw new Error("Ya existe un cliente con ese teléfono");
+    }
     const newCustomer = await customerModel.create(customerData);
     return newCustomer;
   } catch (error) {
+    if (error instanceof Error && error.message.startsWith("Ya existe")) throw error;
+    if ((error as { code?: number }).code === 11000) {
+      throw new Error("Ya existe un cliente con ese correo");
+    }
     console.error("Error creating customer:", error);
     throw new Error("Error al crear el cliente en la base de datos");
   }

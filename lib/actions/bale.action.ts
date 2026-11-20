@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { invalidateMetrics } from "@/lib/services/metrics.service";
 import { guard, ownerFilter } from "@/lib/auth/guards";
 import { rebalanceStock } from "@/lib/domain/inventory";
 import { connectDB } from "../db";
@@ -49,6 +50,7 @@ export async function softDeleteBaleAction(id: string) {
       return { success: false, error: "Fardo no encontrado" };
     }
 
+    invalidateMetrics();
     revalidatePath("/admin/inventory");
     revalidatePath("/salesperson/inventory");
 
@@ -118,6 +120,7 @@ export async function updateBaleAction(id: string, updateData: UpdateBaleInput) 
     });
     await bale.save();
 
+    invalidateMetrics();
     revalidatePath("/admin/inventory");
     revalidatePath("/salesperson/inventory");
 

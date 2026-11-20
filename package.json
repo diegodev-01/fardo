@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "create-user": "tsx --conditions=react-server --env-file=.env.local scripts/create-user.ts"
   },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.11.3",

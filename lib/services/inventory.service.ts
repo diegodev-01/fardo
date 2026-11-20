@@ -60,7 +60,6 @@ export const getGarments = async (page: number, limit: number) => {
     }
 
     const data = await response.json();
-    console.log("los garments: ", data);
 
     return {
       pieces: data.data,

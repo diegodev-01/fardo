@@ -20,9 +20,9 @@ import { Controller, useForm } from "react-hook-form";
 import CustomerForm from "../../customers/components/customer-form";
 import { IGarment } from "@/lib/models/garment.model";
 import { IDelivery } from "@/lib/models/delivery.model";
-import { InventoryForm } from "../../inventory/components/inventory-form";
+import { InventoryForm } from "@/app/(dashboard)/_shared/inventory/components/inventory-form";
 import DeliveryForm from "../../settings/delivery/components/delivery-form";
-import { InventoryProvider } from "../../inventory/inventory-context";
+import { InventoryProvider } from "@/app/(dashboard)/_shared/inventory/inventory-context";
 
 const paymentStates = [
   { value: "PENDIENTE", label: "Pendiente" },
@@ -71,7 +71,6 @@ const OrdersForm = () => {
         const customersData = await getCustomersAction();
         const garmentsData = await getGarmentsAction();
         const deliveriesData = await getDeliveriesAction();
-        console.log(customersData);
 
         // Transformar clientes a SelectOption
         if (customersData && Array.isArray(customersData.data)) {
@@ -117,7 +116,6 @@ const OrdersForm = () => {
     fetchData();
   }, []);
 
-  console.log(customersOptions);
 
   const handleCustomerCreated = (newCustomer: ICustomer) => {
     const newOption: SelectOption = {
@@ -134,7 +132,6 @@ const OrdersForm = () => {
   };
 
   const handleFormSubmit = async (data: SaleSchemaType) => {
-    console.log("Datos a guardar:", data);
     try {
       setIsLoading(true);
       const { createSaleAction } = await import("@/lib/actions/sale.action");
@@ -329,7 +326,10 @@ const OrdersForm = () => {
         >
           <>
             {activeModal === "customer" ? (
-              <CustomerForm onSuccess={handleCustomerCreated} />
+              <CustomerForm
+                onSuccess={handleCustomerCreated}
+                onCancel={() => setActiveModal(null)}
+              />
             ) : activeModal === "delivery" ? (
               <DeliveryForm />
             ) : (
