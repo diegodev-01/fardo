@@ -14,12 +14,14 @@ import {
   ChevronDown,
   Truck,
   CreditCard,
+  Radio,
 } from "lucide-react";
 import { SidebarFooter } from "@/components/common/sidebar-footer";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Fardos / Inventario", href: "/admin/inventory", icon: Package },
+  { label: "En vivo", href: "/admin/live", icon: Radio },
   { label: "Ventas", href: "/admin/orders", icon: ListOrdered },
   { label: "Clientes", href: "/admin/customers", icon: ListOrdered },
   { label: "Reportes & Ventas", href: "/admin/reports", icon: BarChart3 },

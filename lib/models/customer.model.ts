@@ -15,9 +15,9 @@ export interface ICustomer {
 
 interface IAddress {
   _id?: string;
-  department: string;
-  city: string;
-  address: string;
+  department?: string;
+  city?: string;
+  address?: string;
 }
 
 const CustomerSchema = new Schema<ICustomer>(

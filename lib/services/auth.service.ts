@@ -15,8 +15,9 @@ export async function signup(formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
   const name = (formData.get("name") || formData.get("nombre")) as string;
-  const role =
-    formData.get("role") || (formData.get("rol") as string) || "customer";
+  // Never trust a client-supplied role: self-registration is always "customer".
+  const role = "customer" as const;
+  const phone = ((formData.get("phone") as string) || "").trim();
 
   if (!email || !password) {
     return { error: "El correo y la contraseña son obligatorios" };
@@ -42,7 +43,8 @@ export async function signup(formData: FormData) {
     await UserModel.create({
       email: email.toLowerCase().trim(),
       password: hashedPassword,
-      name,
+      name: name || email,
+      phone: phone || "-",
       role,
     });
 

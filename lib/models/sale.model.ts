@@ -4,6 +4,7 @@ export interface ISale {
   _id: string;
   garmentId: string;
   customerId: string;
+  baleId?: string;
   price: number;
 
   paymentState: "PENDIENTE" | "PAGADO" | "CANCELADO";
@@ -21,6 +22,7 @@ const SaleSchema = new Schema<ISale>(
   {
     garmentId: { type: String, required: true },
     customerId: { type: String, required: true },
+    baleId: { type: String },
     price: { type: Number, required: true },
 
     paymentState: {
@@ -41,5 +43,9 @@ const SaleSchema = new Schema<ISale>(
     timestamps: true,
   },
 );
+
+SaleSchema.index({ customerId: 1 });
+SaleSchema.index({ garmentId: 1 });
+SaleSchema.index({ createdAt: -1 });
 
 export default models.Sale || model("Sale", SaleSchema);

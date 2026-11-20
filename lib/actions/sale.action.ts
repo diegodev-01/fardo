@@ -1,155 +1,51 @@
 "use server";
 
-import mongoose from "mongoose";
 import { revalidatePath } from "next/cache";
 import { ZodError } from "zod";
-import { connectDB } from "../db";
-import baleModel from "../models/bale.model";
-import garmentModel from "../models/garment.model";
-import saleModel from "../models/sale.model";
-import { saleSchema, SaleSchemaType } from "../schemas/sale";
+import { guard } from "@/lib/auth/guards";
+import type { PaymentState } from "@/lib/domain/sales";
+import { createSaleCore, updatePaymentCore } from "@/lib/services/sale.service";
+import type { SaleSchemaType } from "../schemas/sale";
+
+type Fail = { success: false; error: string };
+
+function toFail(error: unknown, fallback: string): Fail {
+  if (error instanceof ZodError) {
+    const issue = error.issues[0];
+    return { success: false, error: `Error de validación: ${issue.path.join(".")} - ${issue.message}` };
+  }
+  console.error(fallback, error);
+  // Domain errors are thrown as plain Error with a user-facing message.
+  return { success: false, error: error instanceof Error ? error.message : fallback };
+}
+
+async function revalidateSales() {
+  revalidatePath("/admin/orders");
+  revalidatePath("/admin/inventory");
+  revalidatePath("/salesperson/inventory");
+}
 
 export async function createSaleAction(data: SaleSchemaType) {
-  await connectDB();
-
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
+  const g = await guard(["admin", "salesperson"]);
+  if (!g.ok) return { success: false, error: g.error } as Fail;
   try {
-    const validatedData = saleSchema.parse(data);
-    console.log("validateData: ", validatedData);
-
-    if (validatedData.baleId) {
-      const quantityToDeduct = 1;
-
-      const bale = await baleModel
-        .findById(validatedData.baleId)
-        .session(session);
-
-      if (!bale) {
-        throw new Error("El fardo/bale especificado no existe.");
-      }
-
-      if (bale.currentPieces < quantityToDeduct) {
-        throw new Error(
-          `Stock insuficiente en el fardo. Disponibles: ${bale.currentPieces}, solicitados: ${quantityToDeduct}`,
-        );
-      }
-
-      await baleModel.findByIdAndUpdate(
-        validatedData.baleId,
-        { $inc: { currentPieces: -quantityToDeduct } },
-        { session, new: true },
-      );
-    } else if (validatedData.garmentId) {
-      const garment = await garmentModel
-        .findById(validatedData.garmentId)
-        .session(session);
-
-      console.log("la ropita: ", garment);
-
-      if (!garment) {
-        throw new Error("La prenda especificada no existe.");
-      }
-
-      if (garment.status === "VENDIDO" || garment.isSold) {
-        throw new Error("Esta prenda ya fue vendida previamente.");
-      }
-
-      await garmentModel.findByIdAndUpdate(
-        validatedData.garmentId,
-        {
-          $set: {
-            state: "VENDIDO",
-            status: "VENDIDO",
-            isSold: true,
-          },
-        },
-        { session },
-      );
-
-      const baleId = garment.BaleId || garment.baleId;
-
-      if (baleId) {
-        const bale = await baleModel.findById(baleId).session(session);
-
-        if (bale) {
-          const updatePayload: Record<string, number> = {
-            currentPieces: -1,
-          };
-
-          if (Array.isArray(bale.pieceTypes)) {
-            const targetType = garment.garmentType?.toString();
-
-            const pieceTypeIndex = bale.pieceTypes.findIndex(
-              (pt: { type?: any; garmentType?: string; _id?: string }) => {
-                const ptType = (
-                  pt.type ||
-                  pt.garmentType ||
-                  pt._id
-                )?.toString();
-                return ptType === targetType;
-              },
-            );
-
-            if (pieceTypeIndex !== -1) {
-              const currentQty =
-                bale.pieceTypes[pieceTypeIndex].currentPieces ?? 0;
-                console.log("el bale: ",bale.pieceTypes[pieceTypeIndex].currentPieces);
-                if (currentQty < 1) {
-                console.log("currentQty: ", currentQty);
-                throw new Error(
-                  `Stock insuficiente para el tipo de prenda especificado en el fardo.`,
-                );
-              }
-
-              updatePayload[`pieceTypes.${pieceTypeIndex}.currentPieces`] =
-                -1;
-            } else {
-              console.warn(
-                `Advertencia: No se encontró el tipo de prenda '${targetType}' dentro de pieceTypes del fardo.`,
-              );
-            }
-          }
-
-          await baleModel.findByIdAndUpdate(
-            baleId,
-            { $inc: updatePayload },
-            { session, new: true },
-          );
-        }
-      }
-    }
-
-    const [newSale] = await saleModel.create([validatedData], { session });
-
-    await session.commitTransaction();
-    session.endSession();
-
-    revalidatePath("/admin/orders");
-    revalidatePath("/admin/garments");
-
-    return {
-      success: true,
-      data: JSON.parse(JSON.stringify(newSale)),
-    };
+    const sale = await createSaleCore(data);
+    revalidateSales();
+    return { success: true as const, data: JSON.parse(JSON.stringify(sale)) };
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
+    return toFail(error, "Error al crear la venta");
+  }
+}
 
-    console.error("Error en createSaleAction:", error);
-
-    if (error instanceof ZodError) {
-      const issue = error.issues[0];
-      return {
-        success: false,
-        error: `Error de validación: ${issue.path.join(".")} - ${issue.message}`,
-      };
-    }
-
-    const message =
-      error instanceof Error ? error.message : "Error al crear la venta";
-
-    return { success: false, error: message };
+/** Changes a sale's payment state keeping stock and income consistent. */
+export async function updateSalePaymentAction(saleId: string, to: PaymentState) {
+  const g = await guard(["admin", "salesperson"]);
+  if (!g.ok) return { success: false, error: g.error } as Fail;
+  try {
+    const sale = await updatePaymentCore(saleId, to);
+    revalidateSales();
+    return { success: true as const, data: JSON.parse(JSON.stringify(sale)) };
+  } catch (error) {
+    return toFail(error, "Error al actualizar el pago");
   }
 }

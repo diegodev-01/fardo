@@ -263,12 +263,10 @@ export function InventoryForm({
           price: Number(formData.price) || 0,
           weight: formData.weight ? Number(formData.weight) : undefined,
           sendPrice: Number(formData.sendPrice) || 0,
-          totalQuantity: formData.totalQuantity,
           state: formData.state,
-          pieceTypes: formData.pieceTypes?.map((p) => ({
+          pieceTypes: (formData.pieceTypes ?? []).map((p) => ({
             type: p.type,
             quantity: Number(p.quantity) || 0,
-            currentPieces: Number(p.quantity) || 0,
             MinPiecePrice: Number(p.MinPiecePrice) || 0,
             MaxPiecePrice: p.MaxPiecePrice
               ? Number(p.MaxPiecePrice)
@@ -335,8 +333,6 @@ export function InventoryForm({
       console.error("Error de red:", error);
     }
   };
-
-  console.log(defaultType);
 
   return (
     <div className="flex flex-col h-full">

@@ -20,7 +20,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         await connectDB();
 
-        const user = await UserModel.findOne({ email }).select("+password");
+        const user = await UserModel.findOne({ email: email.toLowerCase().trim() }).select("+password");
 
         if (!user || !user.password) return null;
 
@@ -31,7 +31,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return {
           id: user._id.toString(),
           email: user.email,
-          name: user.name || user.nombre,
+          name: user.name,
           role: user.role, // Pasamos el rol aquí
         };
       },

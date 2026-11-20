@@ -33,8 +33,9 @@ export function withRole<T = Record<string, string>>(
 
       return await handler(req, session, context);
     } catch (error) {
+      console.error("withRole handler error:", error);
       return NextResponse.json(
-        { error: "Internal Server Error", details: (error as Error).message },
+        { error: "Internal Server Error" },
         { status: 500 },
       );
     }

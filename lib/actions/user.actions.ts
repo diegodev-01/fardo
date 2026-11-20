@@ -2,6 +2,7 @@
 
 import { connectDB } from "@/lib/db";
 import userModel from "@/lib/models/user.model";
+import { guard } from "@/lib/auth/guards";
 
 export interface SalespersonSummary {
   _id: string;
@@ -19,6 +20,9 @@ export interface AdminSummary {
 
 export async function getSalespersonsAction() {
   try {
+    const g = await guard(["admin", "salesperson"]);
+    if (!g.ok) return { success: false, error: g.error };
+
     await connectDB();
     const salespersons = await userModel
       .find({ role: "salesperson" })
@@ -43,6 +47,9 @@ export async function getSalespersonsAction() {
 
 export async function getAdminsAction() {
   try {
+    const g = await guard(["admin", "salesperson"]);
+    if (!g.ok) return { success: false, error: g.error };
+
     await connectDB();
     const admins = await userModel
       .find({ role: "admin" })

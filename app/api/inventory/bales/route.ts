@@ -3,18 +3,17 @@ import baleModel from "@/lib/models/bale.model";
 import { withRole } from "@/lib/with-role";
 import { formSchema } from "@/lib/schemas/bale";
 import { NextResponse } from "next/server";
-import { getNextCode } from "@/lib/utils/generate-code";
+import { nextBaleCodeAtomic } from "@/lib/services/counter.service";
+import { parsePagination } from "@/lib/utils/pagination";
 
 export const GET = withRole(
-  ["admin", "salesperson", "customer"],
+  ["admin", "salesperson"],
   async (req, session) => {
     try {
       await connectDB();
 
       const { searchParams } = new URL(req.url);
-      const page = parseInt(searchParams.get("page") || "1", 10);
-      const limit = parseInt(searchParams.get("limit") || "10", 10);
-      const skip = (page - 1) * limit;
+      const { page, limit, skip } = parsePagination(searchParams);
 
       const baseQuery =
         session.user.role === "admin" ? {} : { salesperson: session.user.id };
@@ -60,16 +59,9 @@ export const GET = withRole(
 export const POST = withRole(["admin", "salesperson"], async (req, session) => {
   try {
     const body = await req.json();
-
-    console.log("BODY RECIBIDO:", JSON.stringify(body.pieceTypes, null, 2));
-
     const validation = formSchema.safeParse(body);
 
     if (!validation.success) {
-      console.log(
-        "VALIDATION ERROR:",
-        JSON.stringify(validation.error.format(), null, 2),
-      );
       return NextResponse.json(
         {
           error: "Datos del formulario inválidos",
@@ -79,28 +71,26 @@ export const POST = withRole(["admin", "salesperson"], async (req, session) => {
       );
     }
 
-    console.log(
-      "PIECE TYPES VALIDADOS:",
-      JSON.stringify(validation.data.pieceTypes, null, 2),
-    );
-
     await connectDB();
 
-    const newBale = await baleModel.create({
-      ...validation.data,
-      code: getNextCode(
-        (await baleModel.findOne().sort({ createdAt: -1 }).select("code"))
-          ?.code,
-      ),
-      salesperson: session.user.id,
-      currentPieces: validation.data.totalQuantity,
-    });
-    console.log(
-      "BALE CREADO (raw):",
-      JSON.stringify(newBale.pieceTypes, null, 2),
+    // Codes come from an atomic counter; the retry only covers manual/legacy collisions.
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        const newBale = await baleModel.create({
+          ...validation.data,
+          code: await nextBaleCodeAtomic(),
+          salesperson: session.user.id,
+          currentPieces: validation.data.totalQuantity,
+        });
+        return NextResponse.json(newBale, { status: 201 });
+      } catch (e) {
+        if ((e as { code?: number }).code !== 11000) throw e;
+      }
+    }
+    return NextResponse.json(
+      { error: "No se pudo generar un código único, intenta de nuevo" },
+      { status: 409 },
     );
-
-    return NextResponse.json(newBale, { status: 201 });
   } catch (error) {
     console.error("Error en POST /api/bales:", error);
     return NextResponse.json(

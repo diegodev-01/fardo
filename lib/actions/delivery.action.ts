@@ -4,9 +4,13 @@ import { connectDB } from "../db";
 import deliveryModel from "../models/delivery.model";
 import { deliverySchema, DeliverySchemaType } from "../schemas/delivery";
 import { revalidatePath } from "next/cache";
+import { guard } from "@/lib/auth/guards";
 
 export async function getDeliveriesAction() {
   try {
+    const g = await guard(["admin", "salesperson"]);
+    if (!g.ok) return { success: false, error: g.error };
+
     await connectDB();
     const deliveries = await deliveryModel.find({ deletedAt: null }).lean();
 
@@ -24,6 +28,9 @@ export async function getDeliveriesAction() {
 
 export async function createDeliveryAction(data: DeliverySchemaType) {
   try {
+    const g = await guard(["admin"]);
+    if (!g.ok) return { success: false, error: g.error };
+
     await connectDB();
     const validatedData = deliverySchema.parse(data);
     const newDelivery = await deliveryModel.create(validatedData);
@@ -44,6 +51,9 @@ export async function createDeliveryAction(data: DeliverySchemaType) {
 
 export async function softDeleteDeliveryAction(id: string) {
   try {
+    const g = await guard(["admin"]);
+    if (!g.ok) return { success: false, error: g.error };
+
     await connectDB();
     const updatedDelivery = await deliveryModel.findByIdAndUpdate(
       id,

@@ -10,7 +10,7 @@ async function createUser() {
     const rawPassword = "Diego1234$";
     const name = "Diego";
     const phone = "+59179778503";
-    const role = "salesperson";
+    const role = "admin";
 
     // 1. Comprobar si ya existe
     const existingUser = await UserModel.findOne({ email });

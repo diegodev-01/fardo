@@ -1,10 +1,22 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+import { guard, ownerFilter } from "@/lib/auth/guards";
+import { connectDB } from "../db";
 import garmentModel from "../models/garment.model";
+import { assignMissingCodes } from "../services/counter.service";
+
+const ROLES = ["admin", "salesperson"] as const;
 
 export async function getGarmentsAction() {
   try {
-    const garments = await garmentModel.find({}).lean();
+    const g = await guard([...ROLES]);
+    if (!g.ok) return { success: false, error: g.error };
+
+    await connectDB();
+    const garments = await garmentModel
+      .find({ deletedAt: null, ...ownerFilter(g) })
+      .lean();
 
     const serializedGarments = garments.map((garment) => ({
       ...garment,
@@ -23,28 +35,28 @@ export async function getGarmentsAction() {
     return { success: true, data: serializedGarments };
   } catch (error) {
     console.error("Error en getGarmentsAction:", error);
-    const message =
-      error instanceof Error ? error.message : "Error al obtener las prendas";
-    return { success: false, error: message };
+    return { success: false, error: "Error al obtener las prendas" };
   }
 }
 
 export async function softDeleteGarmentAction(id: string) {
   try {
-    const { connectDB } = await import("../db");
+    const g = await guard([...ROLES]);
+    if (!g.ok) return { success: false, error: g.error };
+
     await connectDB();
-    const updatedGarment = await garmentModel.findByIdAndUpdate(
-      id,
+    const updatedGarment = await garmentModel.findOneAndUpdate(
+      { _id: id, deletedAt: null, ...ownerFilter(g) },
       { deletedAt: new Date() },
-      { new: true }
+      { new: true },
     );
 
     if (!updatedGarment) {
       return { success: false, error: "Prenda no encontrada" };
     }
 
-    const { revalidatePath } = await import("next/cache");
     revalidatePath("/admin/inventory");
+    revalidatePath("/salesperson/inventory");
 
     return {
       success: true,
@@ -52,8 +64,22 @@ export async function softDeleteGarmentAction(id: string) {
     };
   } catch (error) {
     console.error("Error en softDeleteGarmentAction:", error);
-    const message =
-      error instanceof Error ? error.message : "Error al eliminar prenda";
-    return { success: false, error: message };
+    return { success: false, error: "Error al eliminar prenda" };
+  }
+}
+
+/** Backfills codes for garments created before codes existed. Admin only. */
+export async function assignMissingCodesAction(baleId?: string) {
+  try {
+    const g = await guard(["admin"]);
+    if (!g.ok) return { success: false as const, error: g.error };
+    await connectDB();
+    const count = await assignMissingCodes(baleId);
+    revalidatePath("/print/labels");
+    revalidatePath("/admin/inventory");
+    return { success: true as const, count };
+  } catch (error) {
+    console.error("Error en assignMissingCodesAction:", error);
+    return { success: false as const, error: "Error al generar códigos" };
   }
 }

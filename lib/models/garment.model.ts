@@ -51,4 +51,8 @@ const GarmentSchema = new Schema<IGarment>(
   },
 );
 
+GarmentSchema.index({ BaleId: 1 });
+GarmentSchema.index({ deletedAt: 1, state: 1 });
+GarmentSchema.index({ salesperson: 1 });
+
 export default models.Garment || model("Garment", GarmentSchema);

@@ -49,7 +49,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
       setPieceOptions(pieceRes);
 
-      setTotalPages(balesRes.info?.totalPages || 1);
+      setTotalPages(balesRes.pagination?.totalPages || 1);
 
       const formattedBales = (balesRes.data || []).map((bale: IBale) => ({
         ...bale,
@@ -102,7 +102,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         if (cancelled) return;
 
         setPieceOptions(pieceRes);
-        setTotalPages(balesRes.info?.totalPages || 1);
+        setTotalPages(balesRes.pagination?.totalPages || 1);
 
         const formattedBales = (balesRes.data || []).map((bale: IBale) => ({
           ...bale,

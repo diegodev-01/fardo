@@ -131,7 +131,10 @@ export const BaleListItem = React.memo(
       >
         <CardComponent isSelected={isSelected}>
           <div className="flex justify-between items-start">
-            <h3 className="font-mono text-sm">{card.name}</h3>
+            <h3 className="font-mono text-sm">
+              {card.code && <span className="font-bold text-primary mr-1.5">{card.code}</span>}
+              {card.name}
+            </h3>
             <p
               className={`p-1 px-2 text-[10px] border rounded-xl ${
                 card.state === "DISPONIBLE"

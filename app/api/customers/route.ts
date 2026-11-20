@@ -1,3 +1,4 @@
+import { escapeRegex, parsePagination } from "@/lib/utils/pagination";
 import { connectDB } from "@/lib/db";
 import { withRole } from "@/lib/with-role";
 import { NextRequest, NextResponse } from "next/server";
@@ -12,12 +13,12 @@ export const GET = withRole(["admin", "salesperson" ], async (req: NextRequest, 
     }
 
     const searchParams = req.nextUrl.searchParams;
-    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-    const limit = Math.max(1, parseInt(searchParams.get("limit") || "10", 10));
-    const query = searchParams.get("query") || "";
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = parsePagination(searchParams);
+    const query = (searchParams.get("query") || "").slice(0, 100);
 
-    const filter = query ? { name: { $regex: query, $options: "i" } } : {};
+    const filter = query
+      ? { name: { $regex: escapeRegex(query), $options: "i" } }
+      : {};
 
     const [customers, totalDocs] = await Promise.all([
       customerModel.find(filter).skip(skip).limit(limit).lean(),

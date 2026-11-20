@@ -1,6 +1,8 @@
 import { getDeliveriesAction } from "@/lib/actions/delivery.action";
 import DeliveriesClient from "./components/deliveries-client";
 
+export const dynamic = "force-dynamic";
+
 export default async function DeliveriesPage() {
   const result = await getDeliveriesAction();
   const deliveries = result.success ? (result.data ?? []) : [];

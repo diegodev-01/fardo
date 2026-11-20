@@ -26,6 +26,7 @@ export interface IBale {
     category: string;
   }[];
   singlePieces: number;
+  salesperson?: string;
   createdAt: Date;
   updatedAt: Date | null;
   deletedAt?: Date | null;

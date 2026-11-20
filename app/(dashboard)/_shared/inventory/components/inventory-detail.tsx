@@ -24,7 +24,6 @@ export function InventoryDetail({ card }: { card: Card }) {
 
     return pieceFilter === "todos";
   });
-  console.log(card, " y tabien ", filteredPieces);
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
@@ -38,6 +37,11 @@ export function InventoryDetail({ card }: { card: Card }) {
         </button>
         <div className="flex-1">
           <div className="flex flex-wrap items-center gap-2 mb-2">
+            {card.code && (
+              <span className="font-mono text-sm font-bold px-2 py-0.5 rounded-md bg-primary/10 text-primary">
+                {card.code}
+              </span>
+            )}
             <h2 className="text-lg font-semibold">{card.name}</h2>
             <p
               className={`p-1 px-2 text-[10px] border rounded-xl h-fit ${
@@ -56,6 +60,30 @@ export function InventoryDetail({ card }: { card: Card }) {
           </p>
         </div>
         <div className="sm:ml-auto flex items-center gap-2">
+          {(card.code || card.type === "garment") && (
+            <>
+              <a
+                href={
+                  card.code
+                    ? `/print/labels?bale=${encodeURIComponent(card.code)}`
+                    : "/print/labels?loose=1"
+                }
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs font-medium px-3 py-1.5 rounded-lg border border-border hover:bg-background"
+              >
+                Imprimir etiquetas
+              </a>
+              {card.code && (
+                <a
+                  href={`/api/qr/${encodeURIComponent(card.code)}?format=png&download=1`}
+                  className="text-xs font-medium px-3 py-1.5 rounded-lg border border-border hover:bg-background"
+                >
+                  Descargar QR
+                </a>
+              )}
+            </>
+          )}
           <select
             value={pieceFilter}
             onChange={(e) =>

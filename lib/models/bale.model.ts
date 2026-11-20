@@ -55,6 +55,7 @@ const BaleSchema = new Schema<IBale>(
       type: Number,
       default: 0,
     },
+    salesperson: { type: Schema.Types.ObjectId, ref: "User", index: true },
 
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
@@ -64,5 +65,7 @@ const BaleSchema = new Schema<IBale>(
     timestamps: true,
   },
 );
+
+BaleSchema.index({ deletedAt: 1, createdAt: -1 });
 
 export default models.Bale || model("Bale", BaleSchema);
