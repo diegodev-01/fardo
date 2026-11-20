@@ -66,6 +66,7 @@ const CustomerForm = ({ onSuccess, onCancel }: CustomerFormProps) => {
         city: undefined,
       },
       email: undefined,
+      tiktokUser: undefined,
     },
   });
   const selectedDepartment = watch("address.department");
@@ -74,6 +75,7 @@ const CustomerForm = ({ onSuccess, onCancel }: CustomerFormProps) => {
   const cleanData: Customer = {
     ...data,
     email: data.email || undefined,
+    tiktokUser: data.tiktokUser || undefined,
     address: {
       department: data.address?.department || undefined,
       city: data.address?.city || undefined,
@@ -232,6 +234,15 @@ const CustomerForm = ({ onSuccess, onCancel }: CustomerFormProps) => {
                 placeholder="example@example.com"
                 {...register("email")}
                 error={errors.email?.message}
+              />
+            </div>
+
+            <div>
+              <InputComponent
+                label="Usuario de TikTok"
+                placeholder="@usuario"
+                {...register("tiktokUser")}
+                error={errors.tiktokUser?.message}
               />
             </div>
           </div>

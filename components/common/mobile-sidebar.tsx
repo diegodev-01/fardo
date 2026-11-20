@@ -31,6 +31,7 @@ const ADMIN_NAV: NavItem[] = [
 const SALESPERSON_NAV: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Fardos / Inventario", href: "/salesperson/inventory", icon: Package },
+  { label: "En vivo", href: "/salesperson/live", icon: Radio },
 ];
 
 const DEFAULT_NAV: NavItem[] = [

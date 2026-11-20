@@ -9,6 +9,7 @@ import {
   type ClaimStatus,
 } from "@/lib/domain/claims";
 import type { LiveComment } from "@/lib/live/provider";
+import customerModel from "../models/customer.model";
 import garmentModel from "../models/garment.model";
 import { ClaimModel, LiveSessionModel, type IClaim } from "../models/live.model";
 import { createSaleCore, updatePaymentCore } from "./sale.service";
@@ -150,6 +151,33 @@ export async function markClaimPaid(claimId: string) {
   claim.status = "PAID";
   await claim.save();
   return claim;
+}
+
+/**
+ * If the session has auto-confirm on and the commenter's TikTok handle matches
+ * a registered customer, confirms the claim (creating the pending sale).
+ * Returns true when it did; any failure leaves the claim PENDING for manual review.
+ */
+export async function autoConfirmClaim(claimId: string): Promise<boolean> {
+  await connectDB();
+  const claim = await ClaimModel.findById(claimId).lean<IClaim>();
+  if (!claim || claim.status !== "PENDING") return false;
+  const session = await LiveSessionModel.findById(claim.sessionId)
+    .select("autoConfirm")
+    .lean<{ autoConfirm?: boolean }>();
+  if (!session?.autoConfirm) return false;
+  const customer = await customerModel
+    .findOne({ tiktokUser: claim.user.toLowerCase() })
+    .select("_id")
+    .lean<{ _id: unknown }>();
+  if (!customer) return false;
+  try {
+    await confirmClaim(claimId, String(customer._id));
+    return true;
+  } catch (e) {
+    console.error("Auto-confirm failed:", e);
+    return false;
+  }
 }
 
 async function promote(claimId: string) {

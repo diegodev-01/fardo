@@ -7,6 +7,8 @@ export interface ICustomer {
   phone: string;
   address: IAddress;
   email?: string;
+  /** TikTok handle (lowercase, no @) used to auto-match live claims */
+  tiktokUser?: string;
   createdAt?: Date;
   updatedAt?: Date;
   createdBy?: string;
@@ -31,6 +33,7 @@ const CustomerSchema = new Schema<ICustomer>(
       city: { type: String, required: false },
     },
     email: { type: String, required: false, unique: true, sparse: true },
+    tiktokUser: { type: String, required: false, lowercase: true, trim: true, index: true },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
     createdBy: { type: Schema.Types.ObjectId, ref: "User" },

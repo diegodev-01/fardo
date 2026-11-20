@@ -9,6 +9,11 @@ export const customerSchema = z.object({
     address: z.string().optional(),
     city: z.string().optional(),
   }),
+  tiktokUser: z
+    .string()
+    .trim()
+    .transform((v) => v.replace(/^@/, "").toLowerCase())
+    .optional(),
   email: z.string().email("El email no es válido").optional().or(z.literal("")),
 });
 

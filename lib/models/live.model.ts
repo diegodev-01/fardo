@@ -8,6 +8,10 @@ export interface ILiveSession {
   startedAt: Date;
   endedAt?: Date | null;
   createdBy?: string;
+  /** TikTok host handle this session listens to (no @) */
+  tiktokUsername?: string;
+  /** auto-confirm claims whose commenter matches a customer's TikTok handle */
+  autoConfirm?: boolean;
 }
 
 const LiveSessionSchema = new Schema<ILiveSession>(
@@ -17,6 +21,8 @@ const LiveSessionSchema = new Schema<ILiveSession>(
     startedAt: { type: Date, default: Date.now },
     endedAt: { type: Date, default: null },
     createdBy: { type: String },
+    tiktokUsername: { type: String, trim: true, lowercase: true },
+    autoConfirm: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

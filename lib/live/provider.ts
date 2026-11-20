@@ -9,15 +9,3 @@ export interface LiveComment {
 }
 
 export type CommentHandler = (comment: LiveComment) => void | Promise<void>;
-
-/**
- * Source of live comments. Persistent connections (e.g. a TikTok connector)
- * cannot live in stateless serverless routes: run them in a worker process
- * that implements this interface and forwards comments to POST /api/live/ingest.
- */
-export interface LiveEventProvider {
-  readonly name: string;
-  /** Begins emitting; resolves once started. */
-  start(onComment: CommentHandler): Promise<void>;
-  stop(): Promise<void>;
-}
